@@ -5,7 +5,7 @@
 int main(){
     printf("test\n");
     
-    Listnode *node;
+    Listnode *node = NULL;
     /*
     node = (Listnode*)malloc(sizeof(Listnode));
     node->content = "first element";
@@ -16,18 +16,18 @@ int main(){
     */
     append(&node,"test0");
     
-    printf("length:%d - sould be 1\n",length(node));
     printf("head:%s - sould be test0\n",(char*)head(node));
+    printf("length:%d - sould be 1\n",length(node));
     
     append(&node,"test1");
     
-    printf("length:%d - sould be 2\n",length(node));
     printf("head:%s - sould be test0\n",(char*)head(node));
+    printf("length:%d - sould be 2\n",length(node));
     
     append(&node,"test2");
     
-    printf("length:%d - sould be 3\n",length(node));
     printf("head:%s - sould be test0\n",(char*)head(node));
+    printf("length:%d - sould be 3\n",length(node));
     
     
     return 0;

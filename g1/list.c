@@ -20,20 +20,21 @@ Data head(Listnode *start){
 
 
 void append(Listnode **start, Data elem){
-    Listnode *node, **current;
-    node = (Listnode*)malloc(sizeof(Listnode));
+    Listnode *new, *current;
+    new = (Listnode*)malloc(sizeof(Listnode));
     
-    node->content = elem;
-    node->next = NULL;
+    new->content = elem;
+    new->next = NULL;
 
-    current = start;
+    current = *start;
     
-    if (*current != NULL){
+    if (current != NULL){
         
-        while ((*current)->next != NULL) {
-            current = &(*current)->next;
+        while (current->next != NULL) {
+            current = current->next;
         }        
-        (*current)->next = node;
+        current->next = new;
     }
-    
+    else
+        *start = new;
 }
