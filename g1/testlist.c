@@ -29,6 +29,11 @@ int main(){
     printf("head:%s - sould be test2\n",(char*)head(node));
     printf("length:%d - sould be 3\n",length(node));
     
+    reverse(&node);
+    
+    printf("head:%s - sould be test1\n",(char*)head(node));
+    printf("length:%d - sould be 3\n",length(node));
+    
     
     return 0;
     

@@ -18,5 +18,7 @@ int length(Listnode *start); // length
 /* return first element (if not empty) */
 Data head(Listnode *start);
 
+void reverse(Listnode **start);
+
 #endif
 

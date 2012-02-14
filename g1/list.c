@@ -47,3 +47,16 @@ void prepend(Listnode **start, Data elem){
 
     *start = new;
 }
+
+void reverse(Listnode **start){
+    Listnode *new, *cur, *next;
+    new = NULL;
+    cur = *start;
+    while(cur != NULL){
+        next = cur->next;
+        cur->next = new;
+        new = cur;
+        cur = next;
+    }
+    *start = new;
+}
