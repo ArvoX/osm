@@ -20,5 +20,7 @@ Data head(Listnode *start);
 
 void reverse(Listnode **start);
 
+Data pop(Listnode **start);
+
 #endif
 

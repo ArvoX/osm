@@ -60,3 +60,11 @@ void reverse(Listnode **start){
     }
     *start = new;
 }
+
+Data pop(Listnode **start){
+    Listnode *node = *start;
+    Data data = head(node);
+    *start = node->next;
+    free(node);
+    return data;
+}

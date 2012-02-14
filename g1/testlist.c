@@ -34,6 +34,12 @@ int main(){
     printf("head:%s - sould be test1\n",(char*)head(node));
     printf("length:%d - sould be 3\n",length(node));
     
+    char *poped = (char*)pop(&node);
+    
+    printf("poped:%s - sould be test1\n",poped);
+    printf("head:%s - sould be test0\n",(char*)head(node));
+    printf("length:%d - sould be 2\n",length(node));
+    
     
     return 0;
     
