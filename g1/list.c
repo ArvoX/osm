@@ -38,3 +38,12 @@ void append(Listnode **start, Data elem){
     else
         *start = new;
 }
+
+void prepend(Listnode **start, Data elem){
+    Listnode *new = (Listnode*)malloc(sizeof(Listnode));
+    
+    new->content = elem;
+    new->next = *start;
+
+    *start = new;
+}

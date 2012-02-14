@@ -24,9 +24,9 @@ int main(){
     printf("head:%s - sould be test0\n",(char*)head(node));
     printf("length:%d - sould be 2\n",length(node));
     
-    append(&node,"test2");
+    prepend(&node,"test2");
     
-    printf("head:%s - sould be test0\n",(char*)head(node));
+    printf("head:%s - sould be test2\n",(char*)head(node));
     printf("length:%d - sould be 3\n",length(node));
     
     
