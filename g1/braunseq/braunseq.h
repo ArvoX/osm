@@ -15,6 +15,11 @@ int size(Tree tree);
 void addL(Tree tree, Data new_el); /* append to left  */
 void addR(Tree tree, Data new_el); /* append to right */
 
+void addLNode(Tree tree, bNode *node);
+
+int half(int i);
+int odd(int i);
+
 Data remvL(Tree tree); /* remove from left, return removed element  */
 Data remvR(Tree tree); /* remove from right, return removed element */
 

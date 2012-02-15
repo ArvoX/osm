@@ -29,5 +29,5 @@ int stack_push(stack_type* stack, void* data) {
      Hvis ikke det lykkedes (malloc returnerer 0)
      kommer en null-pointer exception fra prepent().
      */
-    return 1;
+    return 0;
 }
