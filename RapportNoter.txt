@@ -1,0 +1,3 @@
+Hvorfor Listnode **Start
+
+Vi er intereseret i at lave nogle operationer på en liste. En hægtet liste er defineret med en peger på det første element. Da det skal være muligt lave ændringer på elementerne i listen, giver vi en peger til en peger til et listeelement.
