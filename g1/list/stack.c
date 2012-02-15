@@ -1,5 +1,6 @@
 #include <stdlib.h>
 #include "stack.h"
+#include "list.h"
 
 int matchAll(Data data){
     return 1;
@@ -18,7 +19,7 @@ void* stack_top(stack_type* stack) {
 
 void* stack_pop(stack_type* stack) {
     Data data = head(stack->list);
-    rmv(stack->list,&matchAll)
+    remv(stack->list,&matchAll);
     return data;
 }
 
