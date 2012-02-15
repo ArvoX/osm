@@ -1,4 +1,5 @@
 #include <stdlib.h>
+#include <stdio.h>
 #include "list.h"
 
 int length(Listnode *start){
@@ -9,6 +10,7 @@ int length(Listnode *start){
     }
     return len;
 }
+
 
 Data head(Listnode *start){
     if (start != NULL){
@@ -54,7 +56,7 @@ void remv(Listnode **start, int (*match)(Data)){
         return;
     last = start;
     curr = *start;
-    while (!(match(curr->content)) && curr!=NULL ) {
+    while (curr!=NULL && !(match(curr->content))) {
         last = &(curr->next);
         curr = curr->next;
     }

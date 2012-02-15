@@ -15,6 +15,9 @@ void prepend(Listnode **start, Data elem);
 
 int length(Listnode *start); // length
 
+void remv(Listnode **start, int (*match)(Data));
+
+
 /* return first element (if not empty) */
 Data head(Listnode *start);
 
