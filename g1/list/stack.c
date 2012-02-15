@@ -19,10 +19,15 @@ void* stack_top(stack_type* stack) {
 
 void* stack_pop(stack_type* stack) {
     Data data = head(stack->list);
-    remv(stack->list,&matchAll);
+    remv(&(stack->list),&matchAll);
     return data;
 }
 
 int stack_push(stack_type* stack, void* data) {
-    prepend(stack->list,data);
+    prepend(&(stack->list),data);
+    /* 
+     Hvis ikke det lykkedes (malloc returnerer 0)
+     kommer en null-pointer exception fra prepent().
+     */
+    return 1;
 }
