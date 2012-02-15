@@ -7,7 +7,7 @@ calc: calc.o stack.o
 calc.o: calc.c stack.h
 	$(CC) $(CFLAGS) -c calc.c
 
-stack.o: stack.c stack.h
+stack.o: stack.c stack.h ../list/list.h
 	$(CC) $(CFLAGS) -c stack.c
 
 clean:
