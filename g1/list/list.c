@@ -47,3 +47,19 @@ void prepend(Listnode **start, Data elem){
 
     *start = new;
 }
+
+void remv(Listnode **start, int (*match)(Data)){
+    Listnode *curr, **last;
+    if (*start == NULL)
+        return;
+    last = start;
+    curr = *start;
+    while (!(match(curr->content)) && curr!=NULL ) {
+        last = &(curr->next);
+        curr = curr->next;
+    }
+    if (curr == NULL)
+        return; /* not found, do nothing */
+    *last = curr->next; /* found, remove and free */
+    free(curr);
+}
