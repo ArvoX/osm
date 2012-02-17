@@ -28,7 +28,6 @@ void combine(Tree t1, Tree t2);
 void del(Tree tree, int i);
 
 int size(Tree tree) {
-	printf("now here");
     if (*tree == NULL) {
         return 0;
     } else {
@@ -41,6 +40,8 @@ void addL(Tree tree, Data new_el){
     // insert into new root, push old root into right subtree, swap sides
     bNode *new = (bNode*)malloc(sizeof(bNode));
     new->el = new_el;
+    new->left = NULL;
+    new->right = NULL;
     
     addLNode(tree,new);
     
@@ -48,20 +49,27 @@ void addL(Tree tree, Data new_el){
 }
 
 void addLNode(Tree tree, bNode *node){
-	printf("adding node: %d\n",(int)(node->el));
+	printf("adding node: %d\n",(int)(node->el));    
     bNode *rightTree, *leftTree;
-
-	if (tree != NULL) {
+    
+	if ((*tree) != NULL) {
     	rightTree = (*tree)->right;
     	leftTree  = (*tree)->left;
-		node->left = rightTree;    
-		node->right = leftTree;
-		tree = &node;
+        
+        // Swithing the branches in this layer.
+		node->right = leftTree;        
+		node->left = rightTree;
+        
+        // This node will be the new root.
+		*tree = node;
+                
+        // Calling addLNode recursively on the right subtree
+        // of tree.
 		printf("  Now branching \n");
 	    addLNode(&rightTree,*tree);
 	 } else {
 		printf("tree==null -> tree = &node\n");
-		tree = &node;
+		*tree = node;
 	 }
 
 }
@@ -87,6 +95,7 @@ Data remvR(Tree tree) {
 }
 
 Data lookup(Tree tree, int i) {
+    printf("din mor\n");
     // navigate through tree recursively (i odd/even)
     if (*tree == NULL || i < 0) {
         error("lookup: index out of bounds");
@@ -153,6 +162,19 @@ void combine(Tree t1, Tree t2) {
 
 // delete last element, knowing the size is i >= 0 (recursive)
 void del(Tree tree, int i) {
+    // navigate through tree recursively (i odd/even)
+    if (*tree == NULL || i < 0) {
+        error("lookup: index out of bounds");
+    }
+    if (i == 0) {
+        free(*tree);
+        (*tree) = NULL;
+    }
+    if (odd(i)) {
+        del(&((*tree)->left), half(i));
+    } else {
+        del(&((*tree)->right), half(i)-1);
+    }
     // navigate through the tree to find the last element (i is size).
     return;
 }

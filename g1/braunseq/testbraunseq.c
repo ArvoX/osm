@@ -2,8 +2,18 @@
 #include <stdio.h>
 #include "braunseq.h"
 
+void printTree(Tree tree){
+    int treeSize = size(tree);
+    for (int i=0; i<treeSize; i++) {
+        printf("index %i = %f\n",i,lookup(tree, i));
+    }
+}
+
+
 int main(){
 	Tree tree;
+    *tree = NULL;
+    
 	printf("instantiate tree..\n");
 	printf("Adding elements\n");
 	addL(tree,1);
@@ -17,7 +27,9 @@ int main(){
 	//printf("instantiate tree..\n");
 	//printf("instantiate tree..\n");
 	//printf("instantiate tree..\n");
-	printf("Size of tree = %d\n",size(tree));
+	//printf("Size of tree = %d\n",size(tree));
+    printTree(tree);
+    
 
 	return 0;
 }
