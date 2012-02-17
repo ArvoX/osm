@@ -28,6 +28,7 @@ void combine(Tree t1, Tree t2);
 void del(Tree tree, int i);
 
 int size(Tree tree) {
+	printf("now here");
     if (*tree == NULL) {
         return 0;
     } else {
@@ -47,16 +48,21 @@ void addL(Tree tree, Data new_el){
 }
 
 void addLNode(Tree tree, bNode *node){
-
+	printf("adding node: %d\n",(int)(node->el));
     bNode *rightTree, *leftTree;
-    
-    rightTree = (*tree)->right;
-    leftTree  = (*tree)->left;
-    
-    node->left = rightTree;    
-    node->right = leftTree;
-    
-    addLNode(&rightTree,*tree);
+
+	if (tree != NULL) {
+    	rightTree = (*tree)->right;
+    	leftTree  = (*tree)->left;
+		node->left = rightTree;    
+		node->right = leftTree;
+		tree = &node;
+		printf("  Now branching \n");
+	    addLNode(&rightTree,*tree);
+	 } else {
+		printf("tree==null -> tree = &node\n");
+		tree = &node;
+	 }
 
 }
 
