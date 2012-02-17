@@ -26,10 +26,18 @@ int main(){
     addL(tree,7);
     addL(tree,8);
     //printf("instantiate tree..\n");
-    //printf("instantiate tree..\n");
-    //printf("instantiate tree..\n");
     //printf("Size of tree = %d\n",size(tree));
     printTree(tree);
+    
+    printf("Now removing all elements from the tree\n");
+    
+    
+    while (size(tree)) {
+        printf("--remvR--\n");
+        remvR(tree);
+        printTree(tree);
+    }
+    
     
     return 0;
 }

@@ -1,8 +1,10 @@
 #include <stdlib.h> // standard library, defining NULL, malloc, free
 #include <stdio.h>  // standard I/O functions
-
-// data types and interface
 #include "braunseq.h"
+
+//#define DEBUG
+#undef DEBUG
+
 
 /*
  * internal helper functions
@@ -39,23 +41,30 @@ int size(Tree tree) {
 void addL(Tree tree, Data new_el){
     // insert into new root, push old root into right subtree, swap sides
     
+#ifdef DEBUG       
 	printf("Adding note %d\n",(int)new_el);
+#endif
+    
     bNode *new = (bNode*)malloc(sizeof(bNode));
     new->el = new_el;
     new->left = NULL;
-    new->right = NULL;
-    
+    new->right = NULL;    
     addLNode(tree,new);
     
+#ifdef DEBUG    
 	printf("node %d added\n",(int)new_el);
     printf("\tleft child: %p\n", (void*)new->left);
     printf("\tright child: %p\n", (void*)new->right);
+#endif
     
     return;
 }
 
 void addLNode(Tree tree, bNode *node){
+#ifdef DEBUG   
 	printf("  push node %d to sub tree %p.\n",(int)(node->el),tree);
+#endif
+    
     bNode *oldRightTree, *oldLeftTree;
     
     
@@ -72,20 +81,28 @@ void addLNode(Tree tree, bNode *node){
         
         // This node will be the new root.
 		*tree = node;
-                        
-        // Calling addLNode recursively on the right subtree
-        // of tree.
+                   
+#ifdef DEBUG 
 		printf("  Now branching \n");
+#endif     
+        // Calling addLNode recursively on the right subtree
+        // of tree.        
 	    addLNode(&node->left,oldRoot);
 	 } else {
-		printf("  tree==null -> tree = &node\n");
-		*tree = node;
-         node->left = NULL;
-         node->right = NULL;
          
-         printf("\tnode %d added\n",(int)node->el);
+#ifdef DEBUG
+         printf("  tree==null -> tree = &node\n");
+#endif     
+         
+		*tree = node;
+        node->left = NULL;
+        node->right = NULL;
+         
+#ifdef DEBUG
+        printf("\tnode %d added\n",(int)node->el);
         printf("\t\tleft child: %p\n", (void*)node->left);
         printf("\t\tright child: %p\n", (void*)node->right);
+#endif     
          
 	 }
 
@@ -108,11 +125,16 @@ Data remvL(Tree tree) {
 Data remvR(Tree tree) {
     // use size to navigate through the tree recursively (helper del)
     // before deleting, call lookup to retrieve the data that is returned
-    return 0;
+    int treeSize = size(tree)-1;
+    Data data = lookup(tree, treeSize);
+    del(tree, treeSize);        
+    return data;
 }
 
 Data lookup(Tree tree, int i) {
+#ifdef DEBUG
     printf("din mor\n");
+#endif
     // navigate through tree recursively (i odd/even)
     if (*tree == NULL || i < 0) {
         error("lookup: index out of bounds");
@@ -183,10 +205,12 @@ void del(Tree tree, int i) {
     if (*tree == NULL || i < 0) {
         error("lookup: index out of bounds");
     }
-    if (i == 0) {
-        free(*tree);
+        
+    if (i == 0) {        
         (*tree) = NULL;
-    }
+        return;
+    }    
+    
     if (odd(i)) {
         del(&((*tree)->left), half(i));
     } else {
