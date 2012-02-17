@@ -12,8 +12,8 @@ void printTree(Tree tree){
 
 
 int main(){
-    void *a = NULL;
-    Tree tree = (Tree)(&a);
+    bNode *a = NULL;
+    Tree tree=(&a);
     
     printf("instantiate tree..\n");
     printf("Adding elements\n");

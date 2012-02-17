@@ -38,6 +38,8 @@ int size(Tree tree) {
 
 void addL(Tree tree, Data new_el){
     // insert into new root, push old root into right subtree, swap sides
+    
+	printf("Adding note %d\n",(int)new_el);
     bNode *new = (bNode*)malloc(sizeof(bNode));
     new->el = new_el;
     new->left = NULL;
@@ -45,31 +47,46 @@ void addL(Tree tree, Data new_el){
     
     addLNode(tree,new);
     
+	printf("node %d added\n",(int)new_el);
+    printf("\tleft child: %p\n", (void*)new->left);
+    printf("\tright child: %p\n", (void*)new->right);
+    
     return;
 }
 
 void addLNode(Tree tree, bNode *node){
-	printf("adding node: %d\n",(int)(node->el));    
-    bNode *rightTree, *leftTree;
+	printf("  push node %d to sub tree %p.\n",(int)(node->el),tree);
+    bNode *oldRightTree, *oldLeftTree;
+    
+    
     
 	if ((*tree) != NULL) {
-    	rightTree = (*tree)->right;
-    	leftTree  = (*tree)->left;
+    	oldRightTree = (*tree)->right;
+    	oldLeftTree  = (*tree)->left;
+        
+        bNode *oldRoot = *tree;
         
         // Swithing the branches in this layer.
-		node->right = leftTree;        
-		node->left = rightTree;
+		node->right = oldLeftTree;        
+		node->left = oldRightTree;
         
         // This node will be the new root.
 		*tree = node;
-                
+                        
         // Calling addLNode recursively on the right subtree
         // of tree.
 		printf("  Now branching \n");
-	    addLNode(&rightTree,*tree);
+	    addLNode(&node->left,oldRoot);
 	 } else {
-		printf("tree==null -> tree = &node\n");
+		printf("  tree==null -> tree = &node\n");
 		*tree = node;
+         node->left = NULL;
+         node->right = NULL;
+         
+         printf("\tnode %d added\n",(int)node->el);
+        printf("\t\tleft child: %p\n", (void*)node->left);
+        printf("\t\tright child: %p\n", (void*)node->right);
+         
 	 }
 
 }
