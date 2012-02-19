@@ -9,19 +9,17 @@ int main(){
     
     printf("instantiate tree..\n");
     printf("Adding elements\n");
-    for(int i = 15;i > 0; i--)
+    for(int i = 7;i >= 0; i--)
         addL(tree,i);
     drawtree(tree);
     
     printf("Now removing all elements from the tree\n");
-    
     
     while (size(tree)) {
         printf("--remvR--\n");
         remvR(tree);
         drawtree(tree);
     }
-   
     
     return 0;
 }
