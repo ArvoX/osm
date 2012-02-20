@@ -3,10 +3,12 @@
 #include "list.h"
 
 int matchAll(Data data){
+    data = data;
     return 1;
 }
 
 void stack_init(stack_type* stack) {
+    stack = stack;
 }
 
 int stack_empty(stack_type* stack) {
