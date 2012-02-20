@@ -6,19 +6,29 @@ void draw(bNode *node, int i);
 void fun(Tree tree);
 int height(Tree tree);
 int wide(int h);
+void repeatChar(char c, int n);
 
 void drawtree(Tree tree)
 {
-//        int size = Size(tree);
 //        draw(*tree, 0);
         fun(tree);
 }
 
+/*
+h: tree height
+l: level in tree, root is at level 0 and level 0 is the heighest level
+c: 
+w: wide of the subtree at current level
+b: number used to calculate number of ' ' and '_' is needed
+s: number of ' ' needed
+u: number of '_' needed
+r: how many times this subtree needs repeating
+*/
 void fun(Tree tree)
 {
         Queue* queue = queue_alloc();
         queue_add(queue, *tree);
-        int h = height(tree);
+	int h = height(tree);
 #ifdef DEBUG
         printf("h: %i\n", h);
 #endif
@@ -44,10 +54,8 @@ void fun(Tree tree)
 #endif
                 for(int r = 0; r < (1 << l); r++)
                 {
-                        for(int i = 0; i < s; i++)
-                                printf(" ");
-                        for(int i = 0; i < u; i++)
-                                printf("_");
+			repeatChar(' ', s);
+			repeatChar('_', u);
 
                         bNode* node = queue_pop(queue);
 			if(node != NULL)
@@ -57,30 +65,31 @@ void fun(Tree tree)
 			        printf("%c", b64[((int)node->el) % 64]);
                         }
                         else
+				//print ! if no node
 			        printf("!");
 
-                        for(int i = 0; i < u; i++)
-                                printf("_");
+			repeatChar('_', u);
+			// we want an extra ' ' in the end
                         int e = s + 1;
+			// and in the lowers level we have a special case for ever odd node
                         if(c == 1 && !(r & 1))
                                 e = 3;
-                        for(int i = 0; i < e; i++)
-                                printf(" ");
+			repeatChar(' ', e);
                 }
                 printf("\n");
-                if(c == 1)
+                
+
+		// in the lowers level we don't want any nodepointers
+		if(c == 1)
                         continue;
                 
                 for(int r = 0; r < (1 << l); r++)
                 {
-			for(int i = 0; i < s-1; i++)
-				printf(" ");
+			repeatChar(' ', s-1);
                         printf("/");
-                        for(int i = 0; i < 2 * u + 1; i++)
-                                printf(" ");
+			repeatChar(' ', 2 * u + 1);
                         printf("\\");
-                        for(int i = 0; i < s; i++)
-                                printf(" ");
+			repeatChar(' ', s);
                 }
                 printf("\n");
         }
@@ -169,3 +178,8 @@ int wide(int h)
         0 2  4  7  13   25
                  *2-1
 */
+void repeatChar(char c, int n)
+{
+	for(int i = 0; i < n; i++)
+		printf("%c", c);
+}
