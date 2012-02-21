@@ -12,7 +12,10 @@ void printaslist(Tree tree){
     printf("]\n");
 }
 
-int main(){
+int main(int argc, char** argv){
+    int nodeCount = 10;
+    if(argc > 1)
+        nodeCount = atoi(argv[1]);
     bNode *a = NULL;
     Tree tree=(&a);
  /*   
@@ -36,7 +39,7 @@ int main(){
     printf("--------------------------\n");
     printf("Adding elements using addL\n");
     printf("--------------------------\n");
-    for(int i = 0;i < 10; i++){        
+    for(int i = 0;i < nodeCount; i++){        
         printf("Adding %i using addL\n",i);
         addL(tree,i);
         printf("Tree:\n");
@@ -50,9 +53,8 @@ int main(){
     printf("--------------------------\n");
     printf("Current tree as list:\n");
     printaslist(tree);
-    printf("lookup: tree[0] == %i\n",(int)lookup(tree,0));
-    printf("lookup: tree[3] == %i\n",(int)lookup(tree,3));
-    printf("lookup: tree[9] == %i\n",(int)lookup(tree,9));
+    for(int i = 0; i < size(tree); i++)
+        printf("lookup: tree[%i] == %i\n",i,(int)lookup(tree,i));
     
     
     printf("-------------------------------\n");
@@ -69,7 +71,7 @@ int main(){
     printf("--------------------------\n");
     printf("Adding elements using addR\n");
     printf("--------------------------\n");
-    for(int i = 0;i < 10; i++){        
+    for(int i = 0;i < nodeCount; i++){        
         printf("Adding %i using addR\n",i);
         addR(tree,i);
         printf("Tree:\n");
@@ -89,14 +91,5 @@ int main(){
         printf("\n\n");
     } 
     
-    printf("-------------------------------\n");
-    printf("Try removing an elements from a\n");
-    printf("empty tree.                    \n");
-    printf("-------------------------------\n");
-    remvL(tree);
-    printf("Tree:\n");
-    printaslist(tree);
-    drawtree(tree);
-    printf("\n\n");
     return 0;
 }

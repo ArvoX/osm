@@ -62,7 +62,8 @@ void fun(Tree tree)
 			{
                                 queue_add(queue, node->left);
                                 queue_add(queue, node->right);
-			        printf("%c", b64[((int)node->el) % 64]);
+			        //printf("%c", b64[((int)node->el) % 64]);
+			        printf("%i", ((int)node->el) % 10);
                         }
                         else
 				//print ! if no node
