@@ -55,19 +55,11 @@ typedef struct{
 } process_t;
 
 void process_start(const char *executable);
-
-process_id_t process_spawn( const char *executable );
-
-int process_run( const char *executable ) ;
-process_id_t process_get_current_process( void ) ;
-
-void process_finish( int retval );
-
-uint32_t process_join( process_id_t pid ) ;
-
-void process_init ( void ) ;
-
-
-
+process_id_t process_spawn(const char *executable);
+int process_run(const char *executable);
+process_id_t process_get_current_process(void);
+void process_finish(int retval);
+uint32_t process_join(process_id_t pid);
+void process_init (void);
 
 #endif
