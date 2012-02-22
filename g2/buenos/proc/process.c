@@ -222,9 +222,9 @@ process_id_t process_spawn(const char *executable) {
             break;
         }
     }
+    KERNEL_ASSERT(pid > -1);
     
     spinlock_release(&proc_table_slock);
-    KERNEL_ASSERT(pid > -1);
     return pid;
 }
 
@@ -233,23 +233,23 @@ int process_run( const char *executable ){
             
     spinlock_acquire(&proc_table_slock);
     
-    int i = 0;
+    process_id_t pid = -1;
+    int i;
     
-    for(i; i<USER_PROC_LIMIT; i++){
-        if (proc_table[i].state == PROC_FREE){
-            break 
+    for(i = 0; i < USER_PROC_LIMIT; i++) {
+        if (proc_table[i].state == PROC_FREE) {
+	    proc_table[i].state      = PROC_RUNNING;
+	    proc_table[i].executable = executable;
+            break; 
         }
     }
+    KERNEL_ASSERT(i > -1);
     
-    proc_table[i].state      = PROC_RUNNING;
-    proc_table[i].executable = executable;
     spinlock_release(&proc_table_slock);
     
     process_start(i);
     
-    
     return -1;
-    
 }
 
 process_id_t process_get_current_process(void){        
