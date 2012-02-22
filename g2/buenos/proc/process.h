@@ -37,10 +37,37 @@
 #ifndef BUENOS_PROC_PROCESS
 #define BUENOS_PROC_PROCESS
 
+#define USERLAND_STACK_TOP 0x7fffeffc
+
+#define USER_PROC_LIMIT 4
+
 typedef int process_id_t;
+
+typedef enum {
+	PROC_RUNNING;
+	PROC_ZOMBIE;
+	PROC_FREE;
+} proc_state_t;
+
+typedef struct{
+	proc_state_t state;
+	char *exec_file;
+} process_t
 
 void process_start(const char *executable);
 
-#define USERLAND_STACK_TOP 0x7fffeffc
+process_id_t process_spawn( const char *executable );
+
+int process_run( const char *executable ) ;
+process_id_t process_get_current_process( void ) ;
+
+void process_finish( int retval );
+
+uint32_t process_join( process_id_t pid ) ;
+
+void process_init ( void ) ;
+
+
+
 
 #endif
