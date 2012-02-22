@@ -84,7 +84,7 @@ void process_start(process_id_t pid)
     
     spinlock_acquire(&proc_table_slock);
 
-    executable = proc_table[pid]->executable;
+    executable = proc_table[pid].executable;
     
     spinlock_release(&proc_table_slock);
     
