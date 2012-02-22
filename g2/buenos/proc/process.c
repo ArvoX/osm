@@ -274,17 +274,21 @@ void process_finish(int retval)
 uint32_t process_join(process_id_t pid)
 {    
     uint32_t retval;
+        
+    intr_status = _interrupt_disable();
     
-    Disable inster
-    
-    while (1) {        
+    while (1) {
+        
         spinlock_acquire(&proc_table_slock);
         if (proc_table[pid].state == PROC_ZOMBIE){
             break;
         }
         spinlock_release(&proc_table_slock);
         
-    }    
+    }
+        
+    _interrupt_set_state(intr_status);
+    
     retval = proc_table[pid].retval;
     
     proc_table[pid].retval = 0;
