@@ -275,7 +275,7 @@ uint32_t process_join(process_id_t pid)
 {    
     uint32_t retval;
     
-    
+    Disable inster
     
     while (1) {        
         spinlock_acquire(&proc_table_slock);
@@ -300,8 +300,8 @@ uint32_t process_join(process_id_t pid)
 void process_init ( void ) {
     
     spinlock_reset(&proc_table_slock);
-    
-    for(int i = 0; i<USER_PROC_LIMIT; i++){
+    int i;
+    for(i = 0; i<USER_PROC_LIMIT; i++){
         proc_table[i].state      = PROC_FREE;
         proc_table[i].executable = "";
         proc_table[i].retval     = 0;
