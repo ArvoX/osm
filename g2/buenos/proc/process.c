@@ -82,7 +82,7 @@ void process_start(process_id_t pid)
     int i;
     
     
-    spinlock_acquire(&thread_table_slock);
+    spinlock_acquire(&proc_table_slock);
 
     executable = proc_table[pid]->executable;
     
