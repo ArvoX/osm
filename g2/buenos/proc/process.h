@@ -44,15 +44,15 @@
 typedef int process_id_t;
 
 typedef enum {
-	PROC_RUNNING;
-	PROC_ZOMBIE;
-	PROC_FREE;
+	PROC_RUNNING,
+	PROC_ZOMBIE,
+	PROC_FREE
 } proc_state_t;
 
 typedef struct{
 	proc_state_t state;
-	char *exec_file;
-} process_t
+	char *executable;
+} process_t;
 
 void process_start(const char *executable);
 
