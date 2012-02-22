@@ -277,7 +277,7 @@ uint32_t process_join(process_id_t pid)
     while (1) {        
         spinlock_acquire(&proc_table_slock);
         if (proc_table[pid].state == PROC_ZOMBIE){
-            break
+            break;
         }
         spinlock_release(&proc_table_slock);
         
@@ -285,7 +285,7 @@ uint32_t process_join(process_id_t pid)
     retval = proc_table[pid].retval;
     
     proc_table[pid].retval = 0;
-    proc_table[pid].state == FREE;
+    proc_table[pid].state == PROC_FREE;
     
     spinlock_release(&proc_table_slock);
     return retval;
