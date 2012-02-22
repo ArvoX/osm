@@ -217,7 +217,7 @@ process_id_t process_spawn( const char *executable ){
     
     for(i; i<USER_PROC_LIMIT; i++){
         if (proc_table[i].state == PROC_FREE){
-            break 
+            break;
         }
     }
             
