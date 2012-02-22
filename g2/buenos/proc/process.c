@@ -68,8 +68,9 @@ process_t proc_table[USER_PROC_LIMIT];
  * @executable The name of the executable to be run in the userland
  * process
  */
-void process_start(const char *executable, process_id_t pid)
+void process_start(process_id_t pid)
 {
+    const char *executable;
     thread_table_t *my_entry;
     pagetable_t *pagetable;
     uint32_t phys_page;
@@ -79,7 +80,15 @@ void process_start(const char *executable, process_id_t pid)
     openfile_t file;
 
     int i;
+    
+    
+    spinlock_acquire(&thread_table_slock);
 
+    executable = proc_table[pid]->executable;
+    
+    spinlock_release(&proc_table_slock);
+    
+    
     interrupt_status_t intr_status;
 
     my_entry = thread_get_current_thread_entry();
@@ -212,17 +221,17 @@ process_id_t process_spawn( const char *executable ){
         }
     }
             
-    proc_table[i].executable = executable;
-    
+    proc_table[i].executable = executable;        
+    TID_t new_thread = thread_create(*process_start,i);
     
     spinlock_release(&proc_table_slock);
     
-    return i;
+    return new_thread;
 }
 
 /* Run process in this thread , only returns if there is an error */
 int process_run( const char *executable ){
-    
+            
     spinlock_acquire(&proc_table_slock);
     
     int i = 0;
@@ -232,13 +241,14 @@ int process_run( const char *executable ){
             break 
         }
     }
-    proc_table[i].executable = executable;
-    
-    process_start(executable,i);
-    
+        
+    proc_table[i].executable = executable;        
     spinlock_release(&proc_table_slock);
     
-    return i;
+    process_start(i);
+    
+    
+    return -1;
     
 }
 
