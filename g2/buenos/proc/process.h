@@ -55,7 +55,7 @@ typedef struct{
 	char *executable;
 } process_t;
 
-void process_start(const char *executable);
+void process_start(const char *executable, process_id_t pid);
 process_id_t process_spawn(const char *executable);
 int process_run(const char *executable);
 process_id_t process_get_current_process(void);

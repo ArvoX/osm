@@ -68,7 +68,7 @@ process_t proc_table[USER_PROC_LIMIT];
  * @executable The name of the executable to be run in the userland
  * process
  */
-void process_start(const char *executable)
+void process_start(const char *executable, process_id_t pid)
 {
     thread_table_t *my_entry;
     pagetable_t *pagetable;
@@ -83,11 +83,15 @@ void process_start(const char *executable)
     interrupt_status_t intr_status;
 
     my_entry = thread_get_current_thread_entry();
-
+    
     /* If the pagetable of this thread is not NULL, we are trying to
        run a userland process for a second time in the same thread.
        This is not possible. */
     KERNEL_ASSERT(my_entry->pagetable == NULL);
+    
+    
+    my_entry->process_id = pid;
+    
 
     pagetable = vm_create_pagetable(thread_get_current_thread());
     KERNEL_ASSERT(pagetable != NULL);
@@ -230,6 +234,7 @@ int process_run( const char *executable ){
     }
     proc_table[i].executable = executable;
     
+    process_start(executable,i);
     
     spinlock_release(&proc_table_slock);
     
