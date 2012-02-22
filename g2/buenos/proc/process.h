@@ -53,6 +53,7 @@ typedef enum {
 typedef struct{
 	proc_state_t state;
 	char *executable;
+    int retval;
 } process_t;
 
 void process_start(process_id_t pid);
