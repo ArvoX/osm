@@ -51,6 +51,11 @@
  * This module contains a function to start a userland process.
  */
 
+spinlock_t proc_table_slock;
+
+
+process_t proc_table[USER_PROC_LIMIT];
+
 /**
  * Starts one userland process. The thread calling this function will
  * be used to run the process and will therefore never return from
@@ -191,10 +196,47 @@ void process_start(const char *executable)
 
 
 /* Run process in new thread , returns PID of new process */
-process_id_t process_spawn( const char *executable );
+process_id_t process_spawn( const char *executable ){
+    
+    spinlock_acquire(&proc_table_slock);
+    
+    int i = 0;
+    
+    for(i; i<USER_PROC_LIMIT; i++){
+        if (proc_table[i].state == PROC_FREE){
+            break 
+        }
+    }
+            
+    proc_table[i].executable = executable;
+    
+    
+    spinlock_release(&proc_table_slock);
+    
+    return i;
+}
 
 /* Run process in this thread , only returns if there is an error */
-int process_run( const char *executable ) ;
+int process_run( const char *executable ){
+    
+    spinlock_acquire(&proc_table_slock);
+    
+    int i = 0;
+    
+    for(i; i<USER_PROC_LIMIT; i++){
+        if (proc_table[i].state == PROC_FREE){
+            break 
+        }
+    }
+    proc_table[i].executable = executable;
+    
+    
+    spinlock_release(&proc_table_slock);
+    
+    return i;
+    
+}
+
 process_id_t process_get_current_process( void ) ;
 
 /* Stop the current process and the kernel thread in which it runs */
@@ -206,7 +248,14 @@ uint32_t process_join( process_id_t pid ) ;
 
 /* Initialize process table. Should be called before any other process-related calls */
 void process_init ( void ) {
-	process_t 
+    
+    spinlock_reset(&proc_table_slock);
+    
+    for(int i = 0; i<USER_PROC_LIMIT; i++){
+        proc_table[i].state     = PROC_FREE;
+        proc_table[i].executable = "";
+    }
+
 }
 
 
