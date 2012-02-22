@@ -130,6 +130,9 @@ void init_startup_thread(uint32_t arg)
 	init_startup_fallback();
     }
 
+    kprintf("Initializing process table\n");
+    process_init();
+
     kprintf("Starting initial program '%s'\n", bootargs_get("initprog"));
 
     process_start(bootargs_get("initprog"));
