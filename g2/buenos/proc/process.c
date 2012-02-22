@@ -208,16 +208,16 @@ void process_start(process_id_t pid)
 
 
 
-/* Run process in new thread , returns PID of new process */
-process_id_t process_spawn( const char *executable ){
+/* Run process in new thread, returns PID of new process */
+process_id_t process_spawn(const char *executable) {
     
     spinlock_acquire(&proc_table_slock);
     
-    int i = 0;
+    process_id_t pid = -1;
     
-    for(i; i<USER_PROC_LIMIT; i++){
-        if (proc_table[i].state == PROC_FREE){
-            i=i;
+    for(int i = 0; i < USER_PROC_LIMIT; i++) {
+        if (proc_table[i].state == PROC_FREE) { 
+            pid = i;
             break;
         }
     }
@@ -228,7 +228,7 @@ process_id_t process_spawn( const char *executable ){
     
     spinlock_release(&proc_table_slock);
     
-    return new_thread;
+    return pid;
 }
 
 /* Run process in this thread , only returns if there is an error */
