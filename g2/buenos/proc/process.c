@@ -240,10 +240,11 @@ int process_run( const char *executable ){
         if (proc_table[i].state == PROC_FREE) {
 	    proc_table[i].state      = PROC_RUNNING;
 	    proc_table[i].executable = executable;
+	    pid = i;
             break; 
         }
     }
-    KERNEL_ASSERT(i > -1);
+    KERNEL_ASSERT(pid > -1);
     
     spinlock_release(&proc_table_slock);
     
