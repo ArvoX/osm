@@ -274,6 +274,9 @@ void process_finish(int retval)
 uint32_t process_join(process_id_t pid)
 {    
     uint32_t retval;
+    
+    
+    
     while (1) {        
         spinlock_acquire(&proc_table_slock);
         if (proc_table[pid].state == PROC_ZOMBIE){
