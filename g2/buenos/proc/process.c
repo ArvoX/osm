@@ -205,27 +205,26 @@ void process_start(process_id_t pid)
     KERNEL_PANIC("thread_goto_userland failed.");
 }
 
-
-
-
 /* Run process in new thread, returns PID of new process */
 process_id_t process_spawn(const char *executable) {
     
     spinlock_acquire(&proc_table_slock);
     
     process_id_t pid = -1;
+    int i;
     
-    for(int i = 0; i < USER_PROC_LIMIT; i++) {
+    for(i = 0; i < USER_PROC_LIMIT; i++) {
         if (proc_table[i].state == PROC_FREE) { 
             pid = i;
+            proc_table[pid].state = PROC_RUNNING;        
             proc_table[pid].executable = executable;        
-            TID_t new_thread = thread_create(*process_start,pid);
+            thread_create(*process_start,(void*)pid);
             break;
         }
     }
     
     spinlock_release(&proc_table_slock);
-    
+    KERNEL_ASSERT(pid > -1);
     return pid;
 }
 
