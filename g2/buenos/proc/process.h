@@ -37,8 +37,9 @@
 #ifndef BUENOS_PROC_PROCESS
 #define BUENOS_PROC_PROCESS
 
-#define USERLAND_STACK_TOP 0x7fffeffc
+#include "lib/types.h"
 
+#define USERLAND_STACK_TOP 0x7fffeffc
 #define USER_PROC_LIMIT 4
 
 typedef int process_id_t;
