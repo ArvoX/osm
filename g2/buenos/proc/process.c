@@ -223,7 +223,7 @@ process_id_t process_spawn( const char *executable ){
     }
     
     
-    proc_table[i].executable = executable;        
+    proc_table[i].executable = executable;      
     TID_t new_thread = thread_create(*process_start,i);
     
     spinlock_release(&proc_table_slock);
@@ -254,8 +254,11 @@ int process_run( const char *executable ){
     
 }
 
-process_id_t process_get_current_process(void)
-{}
+process_id_t process_get_current_process(void){
+        
+    return thread_get_current_thread_entry()->process_id;        
+    
+}
 
 /* Stop the current process and the kernel thread in which it runs */
 void process_finish(int retval)
