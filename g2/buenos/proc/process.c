@@ -252,14 +252,16 @@ int process_run( const char *executable ){
     
 }
 
-process_id_t process_get_current_process( void ) ;
+process_id_t process_get_current_process(void)
+{}
 
 /* Stop the current process and the kernel thread in which it runs */
-void process_finish( int retval );
-
+void process_finish(int retval)
+{}
 /* Wait for the given process to terminate , returning its return value,
  * and marking the process table entry as free */
-uint32_t process_join( process_id_t pid ) ;
+uint32_t process_join(process_id_t pid)
+{}
 
 /* Initialize process table. Should be called before any other process-related calls */
 void process_init ( void ) {
