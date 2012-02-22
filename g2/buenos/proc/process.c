@@ -258,21 +258,40 @@ process_id_t process_get_current_process(void){
 
 /* Stop the current process and the kernel thread in which it runs */
 void process_finish(int retval)
-{    
-    thread_table_t *my_entry;
-    process_id_t pid;
-    
-    my_entry = thread_get_current_thread_entry();
-    pid = my_entry->process_id;
+{  
+    process_id_t pid;    
+    pid = thread_get_current_thread_entry()->process_id;
         
-    spinlock_acquire(&proc_table_slock);    
+    spinlock_acquire(&proc_table_slock); 
     proc_table[pid].state = PROC_ZOMBIE;    
+    proc_table[pid].retval = retval;
     spinlock_release(&proc_table_slock);
+    
+    thread_finish();
 }
 /* Wait for the given process to terminate , returning its return value,
  * and marking the process table entry as free */
 uint32_t process_join(process_id_t pid)
-{}
+{    
+    uint32_t retval;
+    while (1) {        
+        spinlock_acquire(&proc_table_slock);
+        if (proc_table[pid].state == PROC_ZOMBIE){
+            break;
+        }
+        spinlock_release(&proc_table_slock);
+        
+    }    
+    retval = proc_table[pid].retval;
+    
+    proc_table[pid].retval = 0;
+    proc_table[pid].state = PROC_FREE;
+    
+    spinlock_release(&proc_table_slock);
+    return retval;
+    
+    
+}
 
 /* Initialize process table. Should be called before any other process-related calls */
 void process_init ( void ) {
@@ -280,8 +299,9 @@ void process_init ( void ) {
     spinlock_reset(&proc_table_slock);
     
     for(int i = 0; i<USER_PROC_LIMIT; i++){
-        proc_table[i].state     = PROC_FREE;
+        proc_table[i].state      = PROC_FREE;
         proc_table[i].executable = "";
+        proc_table[i].retval     = 0;
     }
 
 }
