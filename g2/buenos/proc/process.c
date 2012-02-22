@@ -68,7 +68,7 @@ process_t proc_table[USER_PROC_LIMIT];
  * @executable The name of the executable to be run in the userland
  * process
  */
-void process_start(process_id_t pid)
+void process_start(uint32_t pid)
 {
     const char *executable;
     thread_table_t *my_entry;
