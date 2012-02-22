@@ -241,8 +241,9 @@ int process_run( const char *executable ){
             break 
         }
     }
-        
-    proc_table[i].executable = executable;        
+    
+    proc_table[i].state      = PROC_RUNNING;
+    proc_table[i].executable = executable;
     spinlock_release(&proc_table_slock);
     
     process_start(i);
@@ -252,15 +253,23 @@ int process_run( const char *executable ){
     
 }
 
-process_id_t process_get_current_process(void){
-        
+process_id_t process_get_current_process(void){        
     return thread_get_current_thread_entry()->process_id;        
-    
 }
 
 /* Stop the current process and the kernel thread in which it runs */
 void process_finish(int retval)
-{}
+{    
+    thread_table_t *my_entry;
+    process_id_t pid;
+    
+    my_entry = thread_get_current_thread_entry();
+    pid = my_entry->process_id;
+        
+    spinlock_acquire(&proc_table_slock);    
+    proc_table[pid].state = PROC_ZOMBIE;    
+    spinlock_release(&proc_table_slock);
+}
 /* Wait for the given process to terminate , returning its return value,
  * and marking the process table entry as free */
 uint32_t process_join(process_id_t pid)
