@@ -72,6 +72,7 @@ void syscall_handle(context_t *user_context)
 			break;
 		}
 		case SYSCALL_EXIT:
+			DEBUG("debuginit","test med debug print\n");
 			process_finish(user_context->cpu_regs[MIPS_REGISTER_A1]);
 			break;
 		case SYSCALL_JOIN:
