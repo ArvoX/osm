@@ -64,10 +64,12 @@ void syscall_handle(context_t *user_context)
 			halt_kernel();
 			break;
 		case SYSCALL_EXEC:
+		{
 			const char *file = (char*)user_context->cpu_regs[MIPS_REGISTER_A1];
 			int pid = process_spawn(file);
 			user_context->cpu_regs[MIPS_REGISTER_V0] = pid;
 			break;
+		}
 		case SYSCALL_EXIT:
 			process_finish(user_context->cpu_regs[MIPS_REGISTER_A1]);
 			break;
@@ -75,7 +77,8 @@ void syscall_handle(context_t *user_context)
 			user_context->cpu_regs[MIPS_REGISTER_V0] = 
 				process_join((process_id_t)user_context->cpu_regs[MIPS_REGISTER_A1]);            
 			break;
-		case SYSCALL_READ:
+/*		case SYSCALL_READ:
+		{
 			int fhandle = (int)user_context->cpu_regs[MIPS_REGISTER_A1];
 			void *buffer = (void*)user_context->cpu_regs[MIPS_REGISTER_A2];
 			int length = (int)user_context->cpu_regs[MIPS_REGISTER_A3];
@@ -83,8 +86,8 @@ void syscall_handle(context_t *user_context)
 			KERNEL_ASSERT(fhandle == FILEHANDLE_STDIN);
 
 			break;
-		default:
-			kprintf("syscall no: %d",user_context->cpu_regs[MIPS_REGISTER_A0]);
+ */		default:
+			kprintf("syscall no: %d",user_context->cpu_regs[MIPS_REGISTER_A0]); 
 			KERNEL_PANIC("Unhandled system call\n");
 	}
 
