@@ -89,7 +89,7 @@ void syscall_handle(context_t *user_context)
 
 			break;
  */		default:
-			DEBUG("debugsyscall","syscall no: %d\n",user_context->cpu_regsMIPS_REGISTER_A0]);
+			DEBUG("debugsyscall","syscall no: %d\n",user_context->cpu_regs[MIPS_REGISTER_A0]);
 			KERNEL_PANIC("Unhandled system call\n");
 	}
 
