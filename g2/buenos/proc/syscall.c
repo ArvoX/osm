@@ -66,6 +66,7 @@ void syscall_handle(context_t *user_context)
 			break;
 		case SYSCALL_EXEC:
 		{
+			DEBUG("debugsyscall","SYSCALL_EXEC\n");
 			const char *file = (char*)user_context->cpu_regs[MIPS_REGISTER_A1];
 			int pid = process_spawn(file);
 			user_context->cpu_regs[MIPS_REGISTER_V0] = pid;
@@ -76,6 +77,7 @@ void syscall_handle(context_t *user_context)
 			process_finish(user_context->cpu_regs[MIPS_REGISTER_A1]);
 			break;
 		case SYSCALL_JOIN:
+			DEBUG("debugsyscall","SYSCALL_JOIN\n");
 			user_context->cpu_regs[MIPS_REGISTER_V0] = 
 				process_join((process_id_t)user_context->cpu_regs[MIPS_REGISTER_A1]);            
 			break;
