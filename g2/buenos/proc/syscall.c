@@ -72,7 +72,7 @@ void syscall_handle(context_t *user_context)
 			break;
 		}
 		case SYSCALL_EXIT:
-			DEBUG("debuginit","test med debug print\n");
+			DEBUG("debugsyscall","SYSCALL_EXIT\n");
 			process_finish(user_context->cpu_regs[MIPS_REGISTER_A1]);
 			break;
 		case SYSCALL_JOIN:
@@ -89,9 +89,7 @@ void syscall_handle(context_t *user_context)
 
 			break;
  */		default:
-//			kprintf("syscall no: %d\n",user_context->cpu_regs[MIPS_REGISTER_A0]);
-			kprintf("Min test\n");	
-			DEBUG("debuginit","test med debug print\n");
+			DEBUG("debugsyscall","syscall no: %d\n",user_context->cpu_regsMIPS_REGISTER_A0]);
 			KERNEL_PANIC("Unhandled system call\n");
 	}
 
