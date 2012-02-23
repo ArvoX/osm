@@ -45,6 +45,8 @@
 #include "vm/vm.h"
 #include "vm/pagepool.h"
 
+#include "kernel/sleepq.h"
+
 
 /** @name Process startup
  *
