@@ -67,6 +67,10 @@ void syscall_handle(context_t *user_context)
 			int pid = process_spawn(file);
 			user_context->cpu_regs[MIPS_REGISTER_V0] = pid;
 			break;
+		case SYSCALL_JOIN:
+			user_context->cpu_regs[MIPS_REGISTER_V0] = 
+				process_join((process_id_t)user_context->cpu_regs[MIPS_REGISTER_A1];            
+			break;
 		default: 
 			KERNEL_PANIC("Unhandled system call\n");
 	}
@@ -74,3 +78,5 @@ void syscall_handle(context_t *user_context)
 	/* Move to next instruction after system call */
 	user_context->pc += 4;
 }
+
+
