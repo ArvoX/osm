@@ -87,7 +87,8 @@ void syscall_handle(context_t *user_context)
 
 			break;
  */		default:
-			kprintf("syscall no: %d\n",user_context->cpu_regs[MIPS_REGISTER_A0]); 
+			kprintf("syscall no: %d\n",user_context->cpu_regs[MIPS_REGISTER_A0]);	
+			DEBUG("test med debug print\n");
 			KERNEL_PANIC("Unhandled system call\n");
 	}
 
