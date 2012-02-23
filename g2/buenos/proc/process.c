@@ -275,30 +275,27 @@ void process_finish(int retval)
 uint32_t process_join(process_id_t pid)
 {    
     uint32_t retval;
-        
+    
+    interrupt_status_t intr_status;
     intr_status = _interrupt_disable();
+    spinlock_acquire(&proc_table_slock);
     
-    while (1) {
-        
-        spinlock_acquire(&proc_table_slock);
-        if (proc_table[pid].state == PROC_ZOMBIE){
-            break;
-        }
+    while (proc_table[pid].state == PROC_ZOMBIE) {        
+        sleepq_add(&proc_table[pid]);
         spinlock_release(&proc_table_slock);
-        
+        thread_switch();
+        spinlock_acquire(&proc_table_slock);
     }
-        
-    _interrupt_set_state(intr_status);
     
-    retval = proc_table[pid].retval;
+    retval = (uint32_t)proc_table[pid].retval;
     
     proc_table[pid].retval = 0;
     proc_table[pid].state = PROC_FREE;
     
     spinlock_release(&proc_table_slock);
+    _interrupt_set_state(intr_status);
+    
     return retval;
-    
-    
 }
 
 /* Initialize process table. Should be called before any other process-related calls */
