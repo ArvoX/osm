@@ -12,4 +12,6 @@ int main(void)
 	retval = syscall_join(child_p);
 	
 	syscall_exit(retval);
+	
+	return -1;
 }
