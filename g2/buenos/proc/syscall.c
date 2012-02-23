@@ -9,14 +9,14 @@
  * are met:
  *
  * 1. Redistributions of source code must retain the above copyright
- *    notice, this list of conditions and the following disclaimer.
+ *	notice, this list of conditions and the following disclaimer.
  * 2. Redistributions in binary form must reproduce the above
- *    copyright notice, this list of conditions and the following
- *    disclaimer in the documentation and/or other materials provided
- *    with the distribution.
+ *	copyright notice, this list of conditions and the following
+ *	disclaimer in the documentation and/or other materials provided
+ *	with the distribution.
  * 3. The name of the author may not be used to endorse or promote
- *    products derived from this software without specific prior
- *    written permission.
+ *	products derived from this software without specific prior
+ *	written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS
  * OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
@@ -49,23 +49,28 @@
  */
 void syscall_handle(context_t *user_context)
 {
-    /* When a syscall is executed in userland, register a0 contains
-     * the number of the syscall. Registers a1, a2 and a3 contain the
-     * arguments of the syscall. The userland code expects that after
-     * returning from the syscall instruction the return value of the
-     * syscall is found in register v0. Before entering this function
-     * the userland context has been saved to user_context and after
-     * returning from this function the userland context will be
-     * restored from user_context.
-     */
-    switch(user_context->cpu_regs[MIPS_REGISTER_A0]) {
-    case SYSCALL_HALT:
-        halt_kernel();
-        break;
-    default: 
-        KERNEL_PANIC("Unhandled system call\n");
-    }
+	/* When a syscall is executed in userland, register a0 contains
+	 * the number of the syscall. Registers a1, a2 and a3 contain the
+	 * arguments of the syscall. The userland code expects that after
+	 * returning from the syscall instruction the return value of the
+	 * syscall is found in register v0. Before entering this function
+	 * the userland context has been saved to user_context and after
+	 * returning from this function the userland context will be
+	 * restored from user_context.
+	 */
+	switch(user_context->cpu_regs[MIPS_REGISTER_A0]) {
+		case SYSCALL_HALT:
+			halt_kernel();
+			break;
+		case SYSCALL_EXEC:
+			const char *file = (const char*)user_context->cpu_regs[MIPS_REGISTER_A1];
+			int pid = process_spawn(file);
+			user_context->cpu_regs[MIPS_REGISTER_V0] = pid;
+			break;
+		default: 
+			KERNEL_PANIC("Unhandled system call\n");
+	}
 
-    /* Move to next instruction after system call */
-    user_context->pc += 4;
+	/* Move to next instruction after system call */
+	user_context->pc += 4;
 }
