@@ -266,10 +266,10 @@ void process_finish(int retval)
     thread_table_t *my_entry;
     process_id_t pid;
 	
-	my_entry = thread_get_current_thread_entry;
+	my_entry = thread_get_current_thread_entry();
     pid = my_entry->process_id;
 	
-	vm_destroy_pagetable(my_enry->pagetable);
+	vm_destroy_pagetable(my_entry->pagetable);
 	my_entry->pagetable = NULL;
 	
     spinlock_acquire(&proc_table_slock); 
