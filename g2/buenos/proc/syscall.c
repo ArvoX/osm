@@ -69,7 +69,8 @@ void syscall_handle(context_t *user_context)
 			user_context->cpu_regs[MIPS_REGISTER_V0] = pid;
 			break;
 		case SYSCALL_EXIT:
-            break;
+			process_finish(user_context->cpu_regs[MIPS_REGISTER_A1]);
+			break;
 		case SYSCALL_JOIN:
 			user_context->cpu_regs[MIPS_REGISTER_V0] = 
 				process_join((process_id_t)user_context->cpu_regs[MIPS_REGISTER_A1]);            
