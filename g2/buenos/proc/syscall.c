@@ -40,6 +40,7 @@
 #include "lib/libc.h"
 #include "kernel/assert.h"
 #include "proc/process.h"
+#include "lib/debug.h"
 
 /**
  * Handle system calls. Interrupts are enabled when this function is
