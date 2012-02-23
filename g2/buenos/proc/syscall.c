@@ -39,6 +39,7 @@
 #include "kernel/panic.h"
 #include "lib/libc.h"
 #include "kernel/assert.h"
+#include "proc/process.h"
 
 /**
  * Handle system calls. Interrupts are enabled when this function is
@@ -72,7 +73,15 @@ void syscall_handle(context_t *user_context)
 			break;
 		case SYSCALL_JOIN:
 			user_context->cpu_regs[MIPS_REGISTER_V0] = 
-				process_join((process_id_t)user_context->cpu_regs[MIPS_REGISTER_A1];            
+				process_join((process_id_t)user_context->cpu_regs[MIPS_REGISTER_A1]);            
+			break;
+		case SYSCALL_READ:
+			int fhandle = user_context->cpu_regs[MIPS_REGISTER_A1];
+			void *buffer = (void*)user_context->cpu_regs[MIPS_REGISTER_A2];
+			int length = user_context->cpu_regs[MIPS_REGISTER_A3];
+
+			KERNEL_ASSERT(fhandle == FILEHANDLE_STDIN);
+
 			break;
 		default: 
 			KERNEL_PANIC("Unhandled system call\n");
