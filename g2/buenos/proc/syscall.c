@@ -64,7 +64,7 @@ void syscall_handle(context_t *user_context)
 			halt_kernel();
 			break;
 		case SYSCALL_EXEC:
-			const char *file = (const char*)user_context->cpu_regs[MIPS_REGISTER_A1];
+			const char *file = (char*)user_context->cpu_regs[MIPS_REGISTER_A1];
 			int pid = process_spawn(file);
 			user_context->cpu_regs[MIPS_REGISTER_V0] = pid;
 			break;
@@ -76,9 +76,9 @@ void syscall_handle(context_t *user_context)
 				process_join((process_id_t)user_context->cpu_regs[MIPS_REGISTER_A1]);            
 			break;
 		case SYSCALL_READ:
-			int fhandle = user_context->cpu_regs[MIPS_REGISTER_A1];
+			int fhandle = (int)user_context->cpu_regs[MIPS_REGISTER_A1];
 			void *buffer = (void*)user_context->cpu_regs[MIPS_REGISTER_A2];
-			int length = user_context->cpu_regs[MIPS_REGISTER_A3];
+			int length = (int)user_context->cpu_regs[MIPS_REGISTER_A3];
 
 			KERNEL_ASSERT(fhandle == FILEHANDLE_STDIN);
 
