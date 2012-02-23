@@ -83,7 +83,8 @@ void syscall_handle(context_t *user_context)
 			KERNEL_ASSERT(fhandle == FILEHANDLE_STDIN);
 
 			break;
-		default: 
+		default:
+			kprintf("syscall no: %d",user_context->cpu_regs[MIPS_REGISTER_A0]);
 			KERNEL_PANIC("Unhandled system call\n");
 	}
 
