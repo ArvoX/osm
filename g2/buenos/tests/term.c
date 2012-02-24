@@ -3,7 +3,7 @@
 
 void write(char *buf);
 int strlen(char *buf);
-void readline(char *buf);
+int readline(char *buf, int len);
 
 int main(void)
 {
@@ -12,8 +12,10 @@ int main(void)
     {
         write("$ ");
         char buf[80];
-        syscall_read(stdin, buf, 80);
-        syscall_exec(buf);
+        if(readline(buf, 80))
+            syscall_exec(buf);
+        else
+            write("input to long\n");
     }
     return 0;
 }
@@ -31,4 +33,21 @@ int strlen(char *str)
     while(str[i] != NULL)
         i++;
     return i;
+}
+
+int readline(char *out, int len)
+{
+    char buf[len];
+    int outfilled = 0;
+    while(1)
+    {
+        int readed = syscall_read(stdin, buf, len);
+        for(i = 0; i < readed; i++)
+            if(buf[i] == '\n')
+                return 1;
+            else if(++outfilled < len)
+                out[outfilled] = buf[i];
+            else
+                return 0;
+    }
 }
