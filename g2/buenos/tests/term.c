@@ -33,6 +33,7 @@ void write(char *buf)
 
 void writeInt(int i)
 {
+    int DEBUG = 50;
     write("func: writeInt\n");
     char c;
     if(i < 0)
@@ -49,6 +50,8 @@ void writeInt(int i)
     }
     while(i > 0)
     {
+        if(DEBUG--)
+            return;
         int j = i % 10;
         int i = i / 10;
         syscall_write(stdout, &numbers[j], 1);
