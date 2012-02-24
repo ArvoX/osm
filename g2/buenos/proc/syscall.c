@@ -41,6 +41,8 @@
 #include "kernel/assert.h"
 #include "proc/process.h"
 
+void gettty();
+
 /**
  * Handle system calls. Interrupts are enabled when this function is
  * called.
@@ -77,7 +79,7 @@ void syscall_handle(context_t *user_context)
 			user_context->cpu_regs[MIPS_REGISTER_V0] = 
 				process_join((process_id_t)user_context->cpu_regs[MIPS_REGISTER_A1]);            
 			break;
-/*		case SYSCALL_READ:
+		case SYSCALL_READ:
 		{
 			int fhandle = (int)user_context->cpu_regs[MIPS_REGISTER_A1];
 			void *buffer = (void*)user_context->cpu_regs[MIPS_REGISTER_A2];
@@ -85,9 +87,37 @@ void syscall_handle(context_t *user_context)
 
 			KERNEL_ASSERT(fhandle == FILEHANDLE_STDIN);
 
+			gcd_t *gcd;
+			gettty(&gcd);
+
+			length = gcd->read(gcd, buffer, length);
+			// da vi retunere length behover vi saa at saette afsluttende null tegn?
+			//buffer2[len] = '\0';
+
+			user_context->cpu_regs[MIPS_REGISTER_V0] = length;
+
 			break;
 		}
-*/		default: 
+		case SYSCALL_WRITE:
+		{
+			int fhandle = (int)user_context->cpu_regs[MIPS_REGISTER_A1];
+			void *buffer = (void*)user_context->cpu_regs[MIPS_REGISTER_A2];
+			int length = (int)user_context->cpu_regs[MIPS_REGISTER_A3];
+
+			KERNEL_ASSERT(fhandle == FILEHANDLE_STDOUT);
+
+			gcd_t *gcd;
+			gettty(&gcd);
+
+			length = gcd->write(gcd, buffer, length);
+			// da vi retunere length behover vi saa at saette afsluttende null tegn?
+			//buffer2[len] = '\0';
+
+			user_context->cpu_regs[MIPS_REGISTER_V0] = length;
+
+			break;
+		}
+		default: 
 			KERNEL_PANIC("Unhandled system call\n");
 	}
 
@@ -95,4 +125,26 @@ void syscall_handle(context_t *user_context)
 	user_context->pc += 4;
 }
 
+void gettty(gcd_t **gcd) {
+	device_t *dev;
+	char buffer[64];
+	char buffer2[64];
+	int len;
 
+	/* Find system console (first tty) */
+	dev = device_get(YAMS_TYPECODE_TTY, 0);
+	KERNEL_ASSERT(dev != NULL);
+
+	*gcd = (gcd_t *)dev->generic_device;
+	KERNEL_ASSERT(gcd != NULL);
+
+//	len = snprintf(buffer, 63, "Hello user! Press any key.\n");
+//	gcd->write(gcd, buffer, len);
+
+//	len = gcd->read(gcd, buffer2, 63);
+//	KERNEL_ASSERT(len >= 0);
+//	buffer2[len] = '\0';
+
+//	len = snprintf(buffer, 63, "You said: '%s'\n", buffer2);
+//	gcd->write(gcd, buffer, len);
+}
