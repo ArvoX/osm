@@ -38,7 +38,7 @@ int strlen(char *str)
 int readline(char *out, int len)
 {
     char buf[len];
-    int outfilled = 0;
+    int i, outfilled = 0;
     while(1)
     {
         int readed = syscall_read(stdin, buf, len);
