@@ -41,6 +41,9 @@
 #include "kernel/assert.h"
 #include "proc/process.h"
 #include "lib/debug.h"
+#include "drivers/device.h"
+#include "drivers/gcd.h"
+#include "drivers/yams.h"
 
 void gettty();
 
@@ -131,9 +134,6 @@ void syscall_handle(context_t *user_context)
 
 void gettty(gcd_t **gcd) {
 	device_t *dev;
-	char buffer[64];
-	char buffer2[64];
-	int len;
 
 	/* Find system console (first tty) */
 	dev = device_get(YAMS_TYPECODE_TTY, 0);
