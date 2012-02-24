@@ -44,9 +44,16 @@ int readline(char *out, int len)
         int readed = syscall_read(stdin, buf, len);
         for(i = 0; i < readed; i++)
             if(buf[i] == '\n')
+            {
+                char c = '\n';
+                syscall_write(stdout, &c, 1);
                 return 1;
+            }
             else if(++outfilled < len)
+            {
+                syscall_write(stdout, buf[i], 1);
                 out[outfilled] = buf[i];
+            }
             else
                 return 0;
     }
