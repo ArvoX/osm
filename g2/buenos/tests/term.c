@@ -51,7 +51,7 @@ int readline(char *out, int len)
             }
             else if(++outfilled < len)
             {
-                syscall_write(stdout, buf[i], 1);
+                syscall_write(stdout, &buf[i], 1);
                 out[outfilled] = buf[i];
             }
             else
