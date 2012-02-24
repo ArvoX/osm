@@ -262,9 +262,16 @@ process_id_t process_get_current_process(void){
 /* Stop the current process and the kernel thread in which it runs */
 void process_finish(int retval)
 {  
-    process_id_t pid;    
-    pid = thread_get_current_thread_entry()->process_id;
-        
+	
+    thread_table_t *my_entry;
+    process_id_t pid;
+	
+	my_entry = thread_get_current_thread_entry();
+    pid = my_entry->process_id;
+	
+	vm_destroy_pagetable(my_entry->pagetable);
+	my_entry->pagetable = NULL;
+	
     spinlock_acquire(&proc_table_slock); 
     proc_table[pid].state = PROC_ZOMBIE;    
     proc_table[pid].retval = retval;
