@@ -10,7 +10,8 @@ int readline(char *buf, int len);
 
 int main(void)
 {
-    write("Stating term.\n");
+    write("func: main\n");
+    write("Welcome to the terminal.\n");
     while(1)
     {
         write("$ ");
@@ -32,6 +33,7 @@ void write(char *buf)
 
 void writeInt(int i)
 {
+    write("func: writeInt\n");
     char c;
     if(i < 0)
     {
@@ -63,6 +65,7 @@ int strlen(char *str)
 
 int readline(char *out, int len)
 {
+    write("func: readline\n");
     char buf[len];
     int i, outfilled = 0;
     while(1)
