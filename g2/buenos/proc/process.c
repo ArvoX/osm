@@ -84,6 +84,8 @@ void process_start(uint32_t pid)
     int i;
     
     
+	DEBUG("debugsyscall","process_start - initial \n");
+	
     spinlock_acquire(&proc_table_slock);
 
     executable = proc_table[pid].executable;
@@ -102,8 +104,8 @@ void process_start(uint32_t pid)
     
     
     my_entry->process_id = pid;
-    
-
+    	
+	
     pagetable = vm_create_pagetable(thread_get_current_thread());
     KERNEL_ASSERT(pagetable != NULL);
 
@@ -210,29 +212,43 @@ void process_start(uint32_t pid)
 /* Run process in new thread, returns PID of new process */
 process_id_t process_spawn(const char *executable) {
     
-    spinlock_acquire(&proc_table_slock);
     
+	/*	
+	 
+	 // Det er et problem at process_run ikke returnerer void og tager en uint32_t type som argument.
+	TID_t current_thread = thread_create(process_run, (uint32_t)executable);
+	thread_run(current_thread);	
+*/
+	
+	
+    spinlock_acquire(&proc_table_slock);
+	
     process_id_t pid = -1;
     int i;
     
     for(i = 0; i < USER_PROC_LIMIT; i++) {
-        if (proc_table[i].state == PROC_FREE) { 
+        if (proc_table[i].state == PROC_FREE) {
             pid = i;
             proc_table[pid].state = PROC_RUNNING;        
             proc_table[pid].executable = executable;        
-            thread_create(process_start, pid);
+            TID_t current_thread = thread_create(&process_start, pid);
+			thread_run(current_thread);
             break;
         }
     }
     KERNEL_ASSERT(pid > -1);
     
     spinlock_release(&proc_table_slock);
+	 	 
+	
+	
     return pid;
 }
 
 /* Run process in this thread , only returns if there is an error */
 int process_run( const char *executable ){
-            
+	
+	DEBUG("debugsyscall","process_run - initial \n");
     spinlock_acquire(&proc_table_slock);
     
     process_id_t pid = -1;
@@ -250,6 +266,7 @@ int process_run( const char *executable ){
     
     spinlock_release(&proc_table_slock);
     
+	DEBUG("debugsyscall","process_run - pid %d\n",i);
     process_start(i);
     
     return -1;
