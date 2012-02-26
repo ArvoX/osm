@@ -16,7 +16,15 @@ int main(void)
         write("$ ");
         char buf[80];
         if(readline(buf, 80))
-            syscall_exec(buf);
+        {
+            int pid = syscall_exec(buf);
+            write("Starting ");
+            write(buf);
+            write(", ");
+            writeInt(pid);
+            write("\n");
+            writeInt(syscall_join(pid));
+        }
         else
             write("input to long\n");
     }
@@ -32,28 +40,32 @@ void write(char *buf)
 
 void writeInt(int i)
 {
-    int DEBUG = 50;
-    char c;
+    char c[80];
     if(i < 0)
     {
-        c = '-';
+        c[0] = '-';
         syscall_write(stdout, &c, 1);
         i = -i;
     }
     else if(i == 0)
     {
-        c = '0';
-        syscall_write(stdout, &c, 1);
-        i = -i;
+        syscall_write(stdout, &numbers[0], 1);
     }
+    int k = 80;
     while(i > 0)
     {
-        if(DEBUG--)
-            return;
         int j = i % 10;
-        int i = i / 10;
-        syscall_write(stdout, &numbers[j], 1);
+        i = i / 10;
+        if(k > 0)
+            c[--k] = numbers[j];
+        else
+        {
+            write("number to big\n");
+            return;
+        }
+
     }
+    syscall_write(stdout, &c[k], 80-k);
 }
 
 int strlen(char *str)
@@ -73,11 +85,10 @@ int readline(char *out, int len)
         int readed = syscall_read(stdin, buf, len);
         for(i = 0; i < readed; i++)
         {
-            writeInt((int)buf[i]);
-            if(buf[i] == '\n')
+            if(buf[i] == 13)
             {
-                //char c = '\n';
-                //syscall_write(stdout, &c, 1);
+                char c = '\n';
+                syscall_write(stdout, &c, 1);
                 return 1;
             }
             else if(++outfilled < len)
