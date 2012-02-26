@@ -123,7 +123,7 @@ void process_start(uint32_t pid)
        (including userland stack). Since we don't have proper tlb
        handling code, all these pages must fit into TLB. */
     KERNEL_ASSERT(elf.ro_pages + elf.rw_pages + CONFIG_USERLAND_STACK_SIZE
-		  <= _tlb_get_maxindex() + 1);
+          <= _tlb_get_maxindex() + 1);
 
     /* Allocate and map stack */
     for(i = 0; i < CONFIG_USERLAND_STACK_SIZE; i++) {
@@ -170,19 +170,19 @@ void process_start(uint32_t pid)
     /* Copy segments */
 
     if (elf.ro_size > 0) {
-	/* Make sure that the segment is in proper place. */
+    /* Make sure that the segment is in proper place. */
         KERNEL_ASSERT(elf.ro_vaddr >= PAGE_SIZE);
         KERNEL_ASSERT(vfs_seek(file, elf.ro_location) == VFS_OK);
         KERNEL_ASSERT(vfs_read(file, (void *)elf.ro_vaddr, elf.ro_size)
-		      == (int)elf.ro_size);
+              == (int)elf.ro_size);
     }
 
     if (elf.rw_size > 0) {
-	/* Make sure that the segment is in proper place. */
+    /* Make sure that the segment is in proper place. */
         KERNEL_ASSERT(elf.rw_vaddr >= PAGE_SIZE);
         KERNEL_ASSERT(vfs_seek(file, elf.rw_location) == VFS_OK);
         KERNEL_ASSERT(vfs_read(file, (void *)elf.rw_vaddr, elf.rw_size)
-		      == (int)elf.rw_size);
+              == (int)elf.rw_size);
     }
 
 
@@ -240,9 +240,9 @@ int process_run( const char *executable ){
     
     for(i = 0; i < USER_PROC_LIMIT; i++) {
         if (proc_table[i].state == PROC_FREE) {
-	    proc_table[i].state      = PROC_RUNNING;
-	    proc_table[i].executable = executable;
-	    pid = i;
+        proc_table[i].state      = PROC_RUNNING;
+        proc_table[i].executable = executable;
+        pid = i;
             break; 
         }
     }
@@ -262,18 +262,18 @@ process_id_t process_get_current_process(void){
 /* Stop the current process and the kernel thread in which it runs */
 void process_finish(int retval)
 {  
-	
-	DEBUG("debugsyscall","process_finish - initial \n");
     
-	thread_table_t *my_entry;
+    DEBUG("debugsyscall","process_finish - initial \n");
+    
+    thread_table_t *my_entry;
     process_id_t pid;
-	
-	my_entry = thread_get_current_thread_entry();
+    
+    my_entry = thread_get_current_thread_entry();
     pid = my_entry->process_id;
-	
-	vm_destroy_pagetable(my_entry->pagetable);
-	my_entry->pagetable = NULL;
-	
+    
+    vm_destroy_pagetable(my_entry->pagetable);
+    my_entry->pagetable = NULL;
+    
     spinlock_acquire(&proc_table_slock); 
     proc_table[pid].state = PROC_ZOMBIE;    
     proc_table[pid].retval = retval;
@@ -287,35 +287,35 @@ uint32_t process_join(process_id_t pid)
 {    
     uint32_t retval;
     
-	DEBUG("debugsyscall","process_join - initial \n");
+    DEBUG("debugsyscall","process_join - initial \n");
 
 
     interrupt_status_t intr_status;
-	DEBUG("debugsyscall","disable interrupt...");
+    DEBUG("debugsyscall","disable interrupt...");
     intr_status = _interrupt_disable();
-	DEBUG("debugsyscall","done. status: %d\n",(int)intr_status);
-	DEBUG("debugsyscall","acquiring spinlock...");
+    DEBUG("debugsyscall","done. status: %d\n",(int)intr_status);
+    DEBUG("debugsyscall","acquiring spinlock...");
     spinlock_acquire(&proc_table_slock);
-	DEBUG("debugsyscall","done\n");
+    DEBUG("debugsyscall","done\n");
 
 
     while (proc_table[pid].state != PROC_ZOMBIE) {        
         sleepq_add(&proc_table[pid]);
-		
-		DEBUG("debugsyscall","process_join - while loop. ");
+        
+        DEBUG("debugsyscall","process_join - while loop. ");
 
         spinlock_release(&proc_table_slock);
 
-		DEBUG("debugsyscall","process_join - spinlock released. switch\n");
+        DEBUG("debugsyscall","process_join - spinlock released. switch\n");
 
         thread_switch();
         
-		DEBUG("debugsyscall","process_join - waked\n");
+        DEBUG("debugsyscall","process_join - waked\n");
 
-		spinlock_acquire(&proc_table_slock);
+        spinlock_acquire(&proc_table_slock);
     }
     
-	DEBUG("debugsyscall","proc state == PROC_ZOMBIE\n");
+    DEBUG("debugsyscall","proc state == PROC_ZOMBIE\n");
 
     retval = (uint32_t)proc_table[pid].retval;
     
