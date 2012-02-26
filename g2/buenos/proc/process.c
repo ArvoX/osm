@@ -212,13 +212,20 @@ void process_start(uint32_t pid)
 /* Run process in new thread, returns PID of new process */
 process_id_t process_spawn(const char *executable) {
     
-    spinlock_acquire(&proc_table_slock);
     
+		
+	TID_t current_thread = thread_create(process_run, (uint32_t)executable);
+	thread_run(current_thread);	
+
+	/*
+	
+    spinlock_acquire(&proc_table_slock);
+	
     process_id_t pid = -1;
     int i;
     
     for(i = 0; i < USER_PROC_LIMIT; i++) {
-        if (proc_table[i].state == PROC_FREE) { 
+        if (proc_table[i].state == PROC_FREE) {
             pid = i;
             proc_table[pid].state = PROC_RUNNING;        
             proc_table[pid].executable = executable;        
@@ -230,7 +237,11 @@ process_id_t process_spawn(const char *executable) {
     KERNEL_ASSERT(pid > -1);
     
     spinlock_release(&proc_table_slock);
-    return pid;
+	 	 
+	*/
+	
+	
+    return current_thread.process_id;
 }
 
 /* Run process in this thread , only returns if there is an error */
