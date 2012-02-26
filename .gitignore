@@ -2,4 +2,6 @@
 *.zip
 .DS_Store
 *.swp
+*.swo
 *.d
+fyams.harddisk

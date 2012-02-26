@@ -41,6 +41,11 @@
 #include "kernel/assert.h"
 #include "proc/process.h"
 #include "lib/debug.h"
+#include "drivers/device.h"
+#include "drivers/gcd.h"
+#include "drivers/yams.h"
+
+void gettty();
 
 #include "kernel/thread.h"
 
@@ -64,6 +69,7 @@ void syscall_handle(context_t *user_context)
 	 */
 	switch(user_context->cpu_regs[MIPS_REGISTER_A0]) {
 		case SYSCALL_HALT:
+			DEBUG("debugsyscall","SYSCALL_HALT\n");
 			halt_kernel();
 			break;
 		case SYSCALL_EXEC:
@@ -83,22 +89,61 @@ void syscall_handle(context_t *user_context)
 			user_context->cpu_regs[MIPS_REGISTER_V0] = 
 				process_join((process_id_t)user_context->cpu_regs[MIPS_REGISTER_A1]);            
 			break;
-/*		case SYSCALL_READ:
+		case SYSCALL_READ:
 		{
+			DEBUG("debugsyscall","SYSCALL_READ\n");
 			int fhandle = (int)user_context->cpu_regs[MIPS_REGISTER_A1];
 			void *buffer = (void*)user_context->cpu_regs[MIPS_REGISTER_A2];
 			int length = (int)user_context->cpu_regs[MIPS_REGISTER_A3];
 
 			KERNEL_ASSERT(fhandle == FILEHANDLE_STDIN);
 
+			gcd_t *gcd;
+			gettty(&gcd);
+
+			length = gcd->read(gcd, buffer, length);
+			// da vi retunere length behover vi saa at saette afsluttende null tegn?
+			//buffer2[len] = '\0';
+
+			user_context->cpu_regs[MIPS_REGISTER_V0] = length;
+
 			break;
- */		default:
+		}
+		case SYSCALL_WRITE:
+		{
+			DEBUG("debugsyscall","SYSCALL_WRITE\n");
+			int fhandle = (int)user_context->cpu_regs[MIPS_REGISTER_A1];
+			void *buffer = (void*)user_context->cpu_regs[MIPS_REGISTER_A2];
+			int length = (int)user_context->cpu_regs[MIPS_REGISTER_A3];
+
+			KERNEL_ASSERT(fhandle == FILEHANDLE_STDOUT);
+
+			gcd_t *gcd;
+			gettty(&gcd);
+
+			length = gcd->write(gcd, buffer, length);
+			// da vi retunere length behover vi saa at saette afsluttende null tegn?
+			//buffer2[len] = '\0';
+
+			user_context->cpu_regs[MIPS_REGISTER_V0] = length;
+
+			break;
+		}
+		default: 
 			DEBUG("debugsyscall","syscall no: %d\n",user_context->cpu_regs[MIPS_REGISTER_A0]);
 			KERNEL_PANIC("Unhandled system call\n");
 	}
-
 	/* Move to next instruction after system call */
 	user_context->pc += 4;
 }
 
+void gettty(gcd_t **gcd) {
+	device_t *dev;
 
+	/* Find system console (first tty) */
+	dev = device_get(YAMS_TYPECODE_TTY, 0);
+	KERNEL_ASSERT(dev != NULL);
+
+	*gcd = (gcd_t *)dev->generic_device;
+	KERNEL_ASSERT(*gcd != NULL);
+}
