@@ -214,6 +214,8 @@ process_id_t process_spawn(const char *executable) {
     
     
 	/*	
+	 
+	 // Det er et problem at process_run ikke returnerer void og tager en uint32_t type som argument.
 	TID_t current_thread = thread_create(process_run, (uint32_t)executable);
 	thread_run(current_thread);	
 */
