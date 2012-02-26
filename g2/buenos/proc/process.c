@@ -105,7 +105,6 @@ void process_start(uint32_t pid)
     
     my_entry->process_id = pid;
     	
-	DEBUG("debugsyscall","process_start - thread %d \n",(int)my_entry);
 	
     pagetable = vm_create_pagetable(thread_get_current_thread());
     KERNEL_ASSERT(pagetable != NULL);
