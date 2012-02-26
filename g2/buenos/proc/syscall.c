@@ -67,6 +67,7 @@ void syscall_handle(context_t *user_context)
 	 */
 	switch(user_context->cpu_regs[MIPS_REGISTER_A0]) {
 		case SYSCALL_HALT:
+			DEBUG("debugsyscall","SYSCALL_HALT\n");
 			halt_kernel();
 			break;
 		case SYSCALL_EXEC:
@@ -88,6 +89,7 @@ void syscall_handle(context_t *user_context)
 			break;
 		case SYSCALL_READ:
 		{
+			DEBUG("debugsyscall","SYSCALL_READ\n");
 			int fhandle = (int)user_context->cpu_regs[MIPS_REGISTER_A1];
 			void *buffer = (void*)user_context->cpu_regs[MIPS_REGISTER_A2];
 			int length = (int)user_context->cpu_regs[MIPS_REGISTER_A3];
@@ -107,6 +109,7 @@ void syscall_handle(context_t *user_context)
 		}
 		case SYSCALL_WRITE:
 		{
+			DEBUG("debugsyscall","SYSCALL_WRITE\n");
 			int fhandle = (int)user_context->cpu_regs[MIPS_REGISTER_A1];
 			void *buffer = (void*)user_context->cpu_regs[MIPS_REGISTER_A2];
 			int length = (int)user_context->cpu_regs[MIPS_REGISTER_A3];
@@ -140,15 +143,5 @@ void gettty(gcd_t **gcd) {
 	KERNEL_ASSERT(dev != NULL);
 
 	*gcd = (gcd_t *)dev->generic_device;
-	KERNEL_ASSERT(gcd != NULL);
-
-//	len = snprintf(buffer, 63, "Hello user! Press any key.\n");
-//	gcd->write(gcd, buffer, len);
-
-//	len = gcd->read(gcd, buffer2, 63);
-//	KERNEL_ASSERT(len >= 0);
-//	buffer2[len] = '\0';
-
-//	len = snprintf(buffer, 63, "You said: '%s'\n", buffer2);
-//	gcd->write(gcd, buffer, len);
+	KERNEL_ASSERT(*gcd != NULL);
 }
