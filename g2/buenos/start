@@ -1,0 +1,23 @@
+#!/bin/sh
+DISK="fyams.harddisk"
+TOOL="util/tfstool"
+NAME=`$TOOL list $DISK | grep -o ': [a-zA-Z0-9]*,' | grep -o '[a-zA-Z0-9]*'`
+SIZE=`$TOOL list $DISK | grep -o 'blocks: .*' | grep -o '[0-9]*'`
+PROG="term"
+
+cd tests
+make || exit 1
+cd ..
+
+rm $DISK
+$TOOL create $DISK $SIZE $NAME
+find tests -type f -executable | while read f; do
+$TOOL write $DISK $f `basename $f`; done
+
+if [ "$1" == "-p" ]
+then
+	PROG="$2"
+	shift 2
+fi
+
+fyams-sim buenos "initprog=[$NAME]$PROG" $@
