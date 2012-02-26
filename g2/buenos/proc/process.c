@@ -214,7 +214,7 @@ process_id_t process_spawn(const char *executable) {
     
     
 		
-	TID_t current_thread = thread_create(process_run, (uint32_t)executable);
+	TID_t current_thread = thread_create(&process_run, (uint32_t)executable);
 	thread_run(current_thread);	
 
 	/*
