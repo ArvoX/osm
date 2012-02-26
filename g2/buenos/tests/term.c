@@ -78,23 +78,25 @@ int strlen(char *str)
 
 int readline(char *out, int len)
 {
-    char buf[len];
+    int bufsize = len - 1;
+    char buf[bufsize];
     int i, outfilled = 0;
     while(1)
     {
-        int readed = syscall_read(stdin, buf, len);
+        int readed = syscall_read(stdin, buf, bufsize);
         for(i = 0; i < readed; i++)
         {
             if(buf[i] == 13)
             {
                 char c = '\n';
                 syscall_write(stdout, &c, 1);
+                out[outfilled] = '\0';
                 return 1;
             }
-            else if(++outfilled < len)
+            else if(outfilled < bufsize)
             {
                 syscall_write(stdout, &buf[i], 1);
-                out[outfilled] = buf[i];
+                out[outfilled++] = buf[i];
             }
             else
                 return 0;
