@@ -213,11 +213,11 @@ void process_start(uint32_t pid)
 process_id_t process_spawn(const char *executable) {
     
     
-		
-	TID_t current_thread = thread_create((void)process_run, (uint32_t)executable);
+	/*	
+	TID_t current_thread = thread_create(process_run, (uint32_t)executable);
 	thread_run(current_thread);	
-
-	/*
+*/
+	
 	
     spinlock_acquire(&proc_table_slock);
 	
@@ -238,10 +238,9 @@ process_id_t process_spawn(const char *executable) {
     
     spinlock_release(&proc_table_slock);
 	 	 
-	*/
 	
 	
-    return current_thread.process_id;
+    return pid;
 }
 
 /* Run process in this thread , only returns if there is an error */
