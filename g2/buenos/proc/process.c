@@ -222,7 +222,8 @@ process_id_t process_spawn(const char *executable) {
             pid = i;
             proc_table[pid].state = PROC_RUNNING;        
             proc_table[pid].executable = executable;        
-            thread_create(process_start, pid);
+            TID_t current_thread = thread_create(process_start, pid);
+			thread_run(current_thread);
             break;
         }
     }
