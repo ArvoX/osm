@@ -206,7 +206,8 @@ void del(Tree tree, int i) {
         error("lookup: index out of bounds");
     }
         
-    if (i == 0) {        
+    if (i == 0) {
+        free(*tree);
         (*tree) = NULL;
         return;
     }    
