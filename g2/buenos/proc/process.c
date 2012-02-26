@@ -84,6 +84,8 @@ void process_start(uint32_t pid)
     int i;
     
     
+	DEBUG("debugsyscall","process_start - initial \n");
+	
     spinlock_acquire(&proc_table_slock);
 
     executable = proc_table[pid].executable;
@@ -102,8 +104,9 @@ void process_start(uint32_t pid)
     
     
     my_entry->process_id = pid;
-    
-
+    	
+	DEBUG("debugsyscall","process_start - thread %d \n",(int)my_entry);
+	
     pagetable = vm_create_pagetable(thread_get_current_thread());
     KERNEL_ASSERT(pagetable != NULL);
 
@@ -232,7 +235,8 @@ process_id_t process_spawn(const char *executable) {
 
 /* Run process in this thread , only returns if there is an error */
 int process_run( const char *executable ){
-            
+	
+	DEBUG("debugsyscall","process_run - initial \n");
     spinlock_acquire(&proc_table_slock);
     
     process_id_t pid = -1;
@@ -250,6 +254,7 @@ int process_run( const char *executable ){
     
     spinlock_release(&proc_table_slock);
     
+	DEBUG("debugsyscall","process_run - pid %d\n",i);
     process_start(i);
     
     return -1;
