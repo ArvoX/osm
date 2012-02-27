@@ -152,7 +152,7 @@ void interrupt_register(uint32_t irq,
 void interrupt_handle(uint32_t cause) {
     int this_cpu, i;
    	
-	DEBUG("debugsyscall","interrupt_handle\n");
+	DEBUG("debugsyscall","interrupt_handle cause: %d\n",(int)cause);
 	
     if(cause & INTERRUPT_CAUSE_SOFTWARE_0) {
         _interrupt_clear_sw0();
