@@ -50,10 +50,13 @@ typedef enum {
 	PROC_FREE
 } proc_state_t;
 
-typedef struct{
+typedef struct {
 	proc_state_t state;
 	const char *executable;
 	int retval;
+	TID_t kernel_thread;
+	process_id_t first_child;
+	process_id_t sibling;
 } process_t;
 
 void process_start(uint32_t pid);

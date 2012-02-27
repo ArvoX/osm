@@ -55,8 +55,9 @@
 
 spinlock_t proc_table_slock;
 
-
 process_t proc_table[USER_PROC_LIMIT];
+
+void kill_child(process_id_t pid);
 
 /**
  * Starts one userland process. The thread calling this function will
@@ -84,7 +85,7 @@ void process_start(uint32_t pid)
     int i;
     
     
-	DEBUG("debugsyscall","t:%d. Process_start - initial\n",(int)thread_get_current_thread());
+	DEBUG("debugsyscall","process_start - initial \n");
 	
     spinlock_acquire(&proc_table_slock);
 
@@ -204,10 +205,6 @@ void process_start(uint32_t pid)
     user_context.cpu_regs[MIPS_REGISTER_SP] = USERLAND_STACK_TOP;
     user_context.pc = elf.entry_point;
 
-	
-	DEBUG("debugsyscall","process_start - done thread_goto_userland\n");
-
-	
     thread_goto_userland(&user_context);
 
     KERNEL_PANIC("thread_goto_userland failed.");
@@ -253,7 +250,7 @@ process_id_t process_spawn(const char *executable) {
 /* Run process in this thread , only returns if there is an error */
 int process_run( const char *executable ){
 	
-	DEBUG("debugsyscall","t:%d. process_run - initial \n",thread_get_current_thread());
+	DEBUG("debugsyscall","process_run - initial \n");
     spinlock_acquire(&proc_table_slock);
     
     process_id_t pid = -1;
@@ -271,7 +268,7 @@ int process_run( const char *executable ){
     
     spinlock_release(&proc_table_slock);
     
-	DEBUG("debugsyscall","t:%d. Process_run - pid %d\n",thread_get_current_thread(),i);
+	DEBUG("debugsyscall","process_run - pid %d\n",i);
     process_start(i);
     
     return -1;
@@ -285,37 +282,34 @@ process_id_t process_get_current_process(void){
 void process_finish(int retval)
 {  
     
-    DEBUG("debugsyscall","t:%d. Process_finish - initial \n",thread_get_current_thread());
+    DEBUG("debugsyscall","process_finish - initial \n");
     
     thread_table_t *my_entry;
     process_id_t pid;
     
     my_entry = thread_get_current_thread_entry();
     pid = my_entry->process_id;
-	
-    vm_destroy_pagetable(my_entry->pagetable);
-    my_entry->pagetable = NULL;
-
-	interrupt_status_t intr_status;
-    DEBUG("debugsyscall","t:%d. Process_finish - Disable interrupts",thread_get_current_thread());
-    intr_status = _interrupt_disable();	
-
-	
-	DEBUG("debugsyscall","t:%d. Process_finish - Acquire spinlock\n",thread_get_current_thread());
-	
+    
     spinlock_acquire(&proc_table_slock); 
     proc_table[pid].state = PROC_ZOMBIE;    
     proc_table[pid].retval = retval;
-    spinlock_release(&proc_table_slock);
-	
-	DEBUG("debugsyscall","t:%d. Process_finish - sleepq_wake \n",thread_get_current_thread());
-	
-	sleepq_wake(&proc_table[pid]);
-	
-    _interrupt_set_state(intr_status);
+    proc_table[pid].kernel_thread;
 
-	DEBUG("debugsyscall","t:%d. Process_finish - done \n",thread_get_current_thread());
-	
+    process_id_t child = proc_table[pid].first_child;
+    while(child != -1)
+    {
+        process_id_t sibling = proc_table[child].sibling;
+        kill_child(child);
+        child = sibling;
+    }
+    
+    proc_table[pid].first_child = -1;
+    
+    spinlock_release(&proc_table_slock);
+    
+    vm_destroy_pagetable(my_entry->pagetable);
+    my_entry->pagetable = NULL;
+    
     thread_finish();
 }
 /* Wait for the given process to terminate , returning its return value,
@@ -328,10 +322,10 @@ uint32_t process_join(process_id_t pid)
 
 
     interrupt_status_t intr_status;
-    DEBUG("debugsyscall","t:%d. disable interrupt...",thread_get_current_thread());
+    DEBUG("debugsyscall","disable interrupt...");
     intr_status = _interrupt_disable();
     DEBUG("debugsyscall","done. status: %d\n",(int)intr_status);
-    DEBUG("debugsyscall","t:%d. acquiring spinlock...",thread_get_current_thread());
+    DEBUG("debugsyscall","acquiring spinlock...");
     spinlock_acquire(&proc_table_slock);
     DEBUG("debugsyscall","done\n");
 
@@ -371,12 +365,25 @@ void process_init ( void ) {
     spinlock_reset(&proc_table_slock);
     int i;
     for(i = 0; i<USER_PROC_LIMIT; i++){
-        proc_table[i].state      = PROC_FREE;
-        proc_table[i].executable = "";
-        proc_table[i].retval     = 0;
+        proc_table[i].state         = PROC_FREE;
+        proc_table[i].executable    = "";
+        proc_table[i].retval        = 0;
+        proc_table[i].kernel_thread = -1;
+        proc_table[i].first_child   = -1;
+        proc_table[i].sibling       = -1;
     }
 
 }
 
+// brutally removes a process from the process table, expect that the table is locked
+void kill_child(process_id_t pid)
+{
+    proc_table[i].state         = PROC_FREE;
+    proc_table[i].executable    = "";
+    proc_table[i].retval        = 0;
+    proc_table[i].kernel_thread = -1;
+    proc_table[i]->first_child  = -1;
+    proc_table[i]->sibling      = -1;
+}
 
 /** @} */
