@@ -253,5 +253,31 @@ I filen
 .
 \end_layout
 
+\begin_layout Section
+Genaflevering rettelser
+\end_layout
+
+\begin_layout Standard
+Vi har rettet fun 
+\begin_inset Formula $\texttt{stact\_init}$
+\end_inset
+
+ til så den rigtigt for initaliseret en stak ved at sørge for at pegeren
+ til listen bliver sat til 
+\begin_inset Formula $\texttt{NULL}$
+\end_inset
+
+.
+\end_layout
+
+\begin_layout Standard
+Vi har også gennemgået vores 
+\begin_inset Formula $\texttt{del}$
+\end_inset
+
+ funktion i braun træet og sørget for at denne for fritgivet hukommelsen
+ rigtigt.
+\end_layout
+
 \end_body
 \end_document
