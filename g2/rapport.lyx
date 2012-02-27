@@ -310,7 +310,18 @@ Denne funktion kører et givent program som en process i den aktuelle.
 \end_layout
 
 \begin_layout Standard
-Her Davy....
+Denne funktion afslutter et proces.
+ Den sørger for at få fjerne døde børn og registre levnde børn forældreløse.
+ Hvis hvus en proces er forældreløse blive den sat 
+\begin_inset Quotes eld
+\end_inset
+
+begravet
+\begin_inset Quotes erd
+\end_inset
+
+ ellers bliver den til en zombi der venter på sin forælder kommer og begraver
+ den.
 \end_layout
 
 \begin_layout Subsubsection*
@@ -426,7 +437,22 @@ user space
 \begin_inset Formula $\texttt{SYSCALL\_WRITE}$
 \end_inset
 
- .....Davy
+ er implementeret ud fra testkonsolen fra i 
+\begin_inset Formula $\texttt{init/main.c}$
+\end_inset
+
+.
+\end_layout
+
+\begin_layout Section*
+Fejl på afleveringstidspunket
+\end_layout
+
+\begin_layout Standard
+Vi har på afleveringstidspunktet en fejl der gør at vores kerne ikke kan
+ lave nye processer.
+ Vi havde fået den fjernet men den kom igen lige før afleveringen og vi
+ havde ikke tid nok til at kunne finde og fjerne den igen.
 \end_layout
 
 \end_body

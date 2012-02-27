@@ -302,7 +302,10 @@ void process_finish(int retval)
     while(child != -1)
     {
         process_id_t sibling = proc_table[child].sibling;
-        proc_table[child].orphan = 1;
+        if(proc_table[child].status == PROG_ZOMBIE)
+            clear_proc_table_entry(child);
+        else
+           proc_table[child].orphan = 1;
         child = sibling;
     }
     
@@ -323,8 +326,11 @@ uint32_t process_join(process_id_t pid)
 
     interrupt_status_t intr_status;
     DEBUG("debugsyscall","t:%d. disable interrupt...",thread_get_current_thread());
-    
-    //We have to disable interrupts for this thread to avoid a situation where the thread is added to the sleep queue and interupted before the spinlock is released.
+
+
+/* We have to disable interrupts for this thread to avoid a situation where the
+thread is added to the sleep queue and interupted before the spinlock is
+released. */
     intr_status = _interrupt_disable();
     DEBUG("debugsyscall","done. status: %d\n",(int)intr_status);
     DEBUG("debugsyscall","acquiring spinlock...");
