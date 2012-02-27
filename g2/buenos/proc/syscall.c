@@ -45,6 +45,9 @@
 #include "drivers/gcd.h"
 #include "drivers/yams.h"
 
+
+#include "kernel/interrupt.h"
+
 void gettty();
 
 #include "kernel/thread.h"
