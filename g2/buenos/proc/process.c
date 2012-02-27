@@ -232,6 +232,8 @@ process_id_t process_spawn(const char *executable) {
             proc_table[pid].state = PROC_RUNNING;        
             proc_table[pid].executable = executable;        
             TID_t current_thread = thread_create(&process_start, pid);
+			// Vi skal tjekke om current_thread == -1. Nu antager vi at den er >-1
+			thread_goto_userland(current_thread);
 			thread_run(current_thread);
             break;
         }
