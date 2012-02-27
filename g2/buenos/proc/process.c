@@ -84,7 +84,7 @@ void process_start(uint32_t pid)
     int i;
     
     
-	DEBUG("debugsyscall","process_start - initial - thread: %d\n",(int)thread_get_current_thread());
+	DEBUG("debugsyscall","t:%d. Process_start - initial\n",(int)thread_get_current_thread());
 	
     spinlock_acquire(&proc_table_slock);
 
