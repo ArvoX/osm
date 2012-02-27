@@ -45,8 +45,6 @@
 #include "lib/libc.h"
 #include "vm/tlb.h"
 
-#include "lib/debug.h"
-
 /* Interrupt vector addresses (only these three should be ever used) */
 #define INTERRUPT_VECTOR_ADDRESS1 0x80000000
 #define INTERRUPT_VECTOR_ADDRESS2 0x80000180
@@ -151,9 +149,7 @@ void interrupt_register(uint32_t irq,
  */
 void interrupt_handle(uint32_t cause) {
     int this_cpu, i;
-   	
-	DEBUG("debugsyscall","interrupt_handle cause: %d\n",(int)cause);
-	
+    
     if(cause & INTERRUPT_CAUSE_SOFTWARE_0) {
         _interrupt_clear_sw0();
     }
