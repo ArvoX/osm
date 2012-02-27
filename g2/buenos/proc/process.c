@@ -289,24 +289,29 @@ void process_finish(int retval)
     
     thread_table_t *my_entry;
     process_id_t pid;
-
-    DEBUG("debugsyscall","t:%d. Process_finish - getting thread entry \n",thread_get_current_thread());
     
     my_entry = thread_get_current_thread_entry();
     pid = my_entry->process_id;
-
-	DEBUG("debugsyscall","t:%d. Process_finish - destroy pagetable \n",thread_get_current_thread());
-
 	
     vm_destroy_pagetable(my_entry->pagetable);
     my_entry->pagetable = NULL;
 
-	DEBUG("debugsyscall","t:%d. Process_finish - ecquire spinlock for proc table \n",thread_get_current_thread());
+	interrupt_status_t intr_status;
+    DEBUG("debugsyscall","t:%d. Process_finish - Disable interrupts",thread_get_current_thread());
+    intr_status = _interrupt_disable();	
+
+	
+	DEBUG("debugsyscall","t:%d. Process_finish - Acquire spinlock\n",thread_get_current_thread());
 	
     spinlock_acquire(&proc_table_slock); 
     proc_table[pid].state = PROC_ZOMBIE;    
     proc_table[pid].retval = retval;
     spinlock_release(&proc_table_slock);
+	
+	DEBUG("debugsyscall","t:%d. Process_finish - sleepq_wake \n",thread_get_current_thread	
+	sleepq_wake(&proc_table[pid]);
+	
+    _interrupt_set_state(intr_status);
 
 	DEBUG("debugsyscall","t:%d. Process_finish - done \n",thread_get_current_thread());
 	
