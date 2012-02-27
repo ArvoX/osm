@@ -85,9 +85,15 @@ void syscall_handle(context_t *user_context)
 			process_finish(user_context->cpu_regs[MIPS_REGISTER_A1]);
 			break;
 		case SYSCALL_JOIN:
+			interrupt_status_t intr_status;
+			DEBUG("debugsyscall","SYSCALL_JOIN - disable interrupt...");
+			intr_status = _interrupt_disable();
+			
 			DEBUG("debugsyscall","SYSCALL_JOIN - thread: %d\n",thread_get_current_thread());
 			user_context->cpu_regs[MIPS_REGISTER_V0] = 
-				process_join((process_id_t)user_context->cpu_regs[MIPS_REGISTER_A1]);            
+				process_join((process_id_t)user_context->cpu_regs[MIPS_REGISTER_A1]);			
+			_interrupt_set_state(intr_status);
+			
 			break;
 		case SYSCALL_READ:
 		{
