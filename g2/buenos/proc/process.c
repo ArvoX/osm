@@ -57,7 +57,7 @@ spinlock_t proc_table_slock;
 
 process_t proc_table[USER_PROC_LIMIT];
 
-void kill_child(process_id_t pid);
+void clear_proc_table_entry(process_id_t pid);
 
 /**
  * Starts one userland process. The thread calling this function will
@@ -85,8 +85,8 @@ void process_start(uint32_t pid)
     int i;
     
     
-	DEBUG("debugsyscall","process_start - initial \n");
-	
+    DEBUG("debugsyscall","process_start - initial \n");
+    
     spinlock_acquire(&proc_table_slock);
 
     executable = proc_table[pid].executable;
@@ -105,8 +105,8 @@ void process_start(uint32_t pid)
     
     
     my_entry->process_id = pid;
-    	
-	
+        
+    
     pagetable = vm_create_pagetable(thread_get_current_thread());
     KERNEL_ASSERT(pagetable != NULL);
 
@@ -211,50 +211,51 @@ void process_start(uint32_t pid)
 }
 
 /* Run process in new thread, returns PID of new process */
-process_id_t process_spawn(const char *executable) {
+process_id_t process_spawn(const char *executable) {    
     
-
-	
-	
-    spinlock_acquire(&proc_table_slock);
-	
+    // Acquiring the spinlock of the process table.
+    spinlock_acquire(&proc_table_slock);    
     process_id_t pid = -1;
-    int i;
     
+    // Find an empty entrance in the process tabel.
+    int i;    
     for(i = 0; i < USER_PROC_LIMIT; i++) {
         if (proc_table[i].state == PROC_FREE) {
+            // Initialize the process
             pid = i;
             proc_table[pid].state = PROC_RUNNING;        
-            proc_table[pid].executable = executable;        
+            proc_table[pid].executable = executable;
+            // Creating new thread. The new thread is going to run process_start()
             TID_t current_thread = thread_create(&process_start, pid);
-			// Vi skal tjekke om current_thread == -1. Nu antager vi at den er >-1
-			thread_run(current_thread);
+            // Vi skal evt. tjekke om current_thread == -1.
+            thread_run(current_thread);
             break;
         }
     }
     KERNEL_ASSERT(pid > -1);
     
     spinlock_release(&proc_table_slock);
-	 	 
-	
-	
+    
     return pid;
 }
 
 /* Run process in this thread , only returns if there is an error */
 int process_run( const char *executable ){
-	
-	DEBUG("debugsyscall","process_run - initial \n");
+    
+    DEBUG("debugsyscall","process_run - initial \n");
+    // Acquiring the spinlock of the process table.
     spinlock_acquire(&proc_table_slock);
     
     process_id_t pid = -1;
-    int i;
     
+    // Find an empty entrance in the process tabel.
+    int i;    
     for(i = 0; i < USER_PROC_LIMIT; i++) {
         if (proc_table[i].state == PROC_FREE) {
-        proc_table[i].state      = PROC_RUNNING;
-        proc_table[i].executable = executable;
-        pid = i;
+            // Initialize the process
+            proc_table[i].state      = PROC_RUNNING;
+            proc_table[i].executable = executable;
+            pid = i;
             break; 
         }
     }
@@ -262,7 +263,9 @@ int process_run( const char *executable ){
     
     spinlock_release(&proc_table_slock);
     
-	DEBUG("debugsyscall","process_run - pid %d\n",i);
+    DEBUG("debugsyscall","process_run - pid %d\n",i);
+
+    // Starting the process. This function should never return.
     process_start(i);
     
     return -1;
@@ -284,20 +287,25 @@ void process_finish(int retval)
     my_entry = thread_get_current_thread_entry();
     pid = my_entry->process_id;
     
-    spinlock_acquire(&proc_table_slock); 
-    proc_table[pid].state = PROC_ZOMBIE;    
-    proc_table[pid].retval = retval;
-    proc_table[pid].kernel_thread;
+    spinlock_acquire(&proc_table_slock);
 
     process_id_t child = proc_table[pid].first_child;
+    
+    if(proc_table[pid].orphan)
+        clear_proc_table_entry(pid);
+    else
+    {
+        proc_table[pid].state = PROC_ZOMBIE;    
+        proc_table[pid].retval = retval;
+        proc_table[pid].first_child = -1;
+    }
+
     while(child != -1)
     {
         process_id_t sibling = proc_table[child].sibling;
-        kill_child(child);
+        proc_table[child].orphan = 1;
         child = sibling;
     }
-    
-    proc_table[pid].first_child = -1;
     
     spinlock_release(&proc_table_slock);
     
@@ -314,9 +322,10 @@ uint32_t process_join(process_id_t pid)
     
     DEBUG("debugsyscall","process_join - initial \n");
 
-
     interrupt_status_t intr_status;
-    DEBUG("debugsyscall","disable interrupt...");
+    DEBUG("debugsyscall","t:%d. disable interrupt...",thread_get_current_thread());
+    
+    //We have to disable interrupts for this thread to avoid a situation where the thread is added to the sleep queue and interupted before the spinlock is released.
     intr_status = _interrupt_disable();
     DEBUG("debugsyscall","done. status: %d\n",(int)intr_status);
     DEBUG("debugsyscall","acquiring spinlock...");
@@ -343,9 +352,8 @@ uint32_t process_join(process_id_t pid)
     DEBUG("debugsyscall","proc state == PROC_ZOMBIE\n");
 
     retval = (uint32_t)proc_table[pid].retval;
-    
-    proc_table[pid].retval = 0;
-    proc_table[pid].state = PROC_FREE;
+    // Resetting the entrance in the process tabel.
+    clear_proc_table_entry(pid);
     
     spinlock_release(&proc_table_slock);
     _interrupt_set_state(intr_status);
@@ -359,25 +367,18 @@ void process_init ( void ) {
     spinlock_reset(&proc_table_slock);
     int i;
     for(i = 0; i<USER_PROC_LIMIT; i++){
-        proc_table[i].state         = PROC_FREE;
-        proc_table[i].executable    = "";
-        proc_table[i].retval        = 0;
-        proc_table[i].kernel_thread = -1;
-        proc_table[i].first_child   = -1;
-        proc_table[i].sibling       = -1;
+        clear_proc_table_entry(i);
     }
 
 }
 
-// brutally removes a process from the process table, expect that the table is locked
-void kill_child(process_id_t pid)
+// clears an proc_table entry, lock must be acquired before called
+void clear_proc_table_entry(process_id_t i)
 {
-    proc_table[i].state         = PROC_FREE;
-    proc_table[i].executable    = "";
-    proc_table[i].retval        = 0;
-    proc_table[i].kernel_thread = -1;
-    proc_table[i]->first_child  = -1;
-    proc_table[i]->sibling      = -1;
+    proc_table[i].state       = PROC_FREE;
+    proc_table[i].executable  = "";
+    proc_table[i].retval      = 0;
+    proc_table[i].first_child = -1;
+    proc_table[i].sibling     = -1;
+    proc_table[i].orphan      = 0;
 }
-
-/** @} */

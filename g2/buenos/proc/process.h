@@ -54,9 +54,9 @@ typedef struct {
 	proc_state_t state;
 	const char *executable;
 	int retval;
-	TID_t kernel_thread;
 	process_id_t first_child;
 	process_id_t sibling;
+	int orphan;
 } process_t;
 
 void process_start(uint32_t pid);
