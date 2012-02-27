@@ -1,6 +1,7 @@
 *.o
 *.zip
 .DS_Store
+*.dSYM
 *.swp
 *.swo
 *.d
