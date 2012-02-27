@@ -22,7 +22,7 @@ list.o: list.c list.h
 clean:
 	rm -f *.o
 #	rm -f $(EXECUTABLE) calc
-	rm -f calc
+	rm -f calc tags TAGS
 
 all: $(EXECUTABLE)
 ctags:
