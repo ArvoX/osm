@@ -308,7 +308,8 @@ void process_finish(int retval)
     proc_table[pid].retval = retval;
     spinlock_release(&proc_table_slock);
 	
-	DEBUG("debugsyscall","t:%d. Process_finish - sleepq_wake \n",thread_get_current_thread	
+	DEBUG("debugsyscall","t:%d. Process_finish - sleepq_wake \n",thread_get_current_thread());
+	
 	sleepq_wake(&proc_table[pid]);
 	
     _interrupt_set_state(intr_status);
