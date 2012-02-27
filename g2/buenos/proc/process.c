@@ -204,6 +204,10 @@ void process_start(uint32_t pid)
     user_context.cpu_regs[MIPS_REGISTER_SP] = USERLAND_STACK_TOP;
     user_context.pc = elf.entry_point;
 
+	
+	DEBUG("debugsyscall","process_start - done thread_goto_userland");
+
+	
     thread_goto_userland(&user_context);
 
     KERNEL_PANIC("thread_goto_userland failed.");
