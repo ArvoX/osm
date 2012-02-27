@@ -310,7 +310,7 @@ uint32_t process_join(process_id_t pid)
 //    interrupt_status_t intr_status;
 	DEBUG("debugsyscall","disable interrupt...");
   //  intr_status = _interrupt_disable();
-	DEBUG("debugsyscall","done. status: %d\n",(int)intr_status);
+//	DEBUG("debugsyscall","done. status: %d\n",(int)intr_status);
 	DEBUG("debugsyscall","acquiring spinlock...");
     spinlock_acquire(&proc_table_slock);
 	DEBUG("debugsyscall","done\n");
