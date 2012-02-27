@@ -199,7 +199,7 @@ TID_t thread_create(void (*func)(uint32_t), uint32_t arg)
     /* enable interrupts for this new thread */
     thread_table[tid].context->status = 
     INTERRUPT_MASK_ALL | INTERRUPT_MASK_MASTER;
-    
+    kprintf("thread created no:%d\n",(int)tid);
     return tid;
 }
 
