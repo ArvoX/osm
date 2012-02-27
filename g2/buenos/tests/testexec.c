@@ -11,7 +11,7 @@ int main(void)
 	child_p = syscall_exec("[test]testexit");
 	retval = syscall_join(child_p);
 	
-	syscall_exit(retval);
+	syscall_halt();
 	
 	return -1;
 }
