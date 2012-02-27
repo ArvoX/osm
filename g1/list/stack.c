@@ -8,7 +8,7 @@ int matchAll(Data data){
 }
 
 void stack_init(stack_type* stack) {
-    stack = stack;
+    stack->list = NULL;
 }
 
 int stack_empty(stack_type* stack) {
