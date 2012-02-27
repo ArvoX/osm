@@ -4,6 +4,7 @@
 *.dSYM
 *.swp
 *.swo
+*~
 *.d
 tags
 TAGS
