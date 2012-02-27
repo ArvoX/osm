@@ -235,7 +235,6 @@ process_id_t process_spawn(const char *executable) {
     KERNEL_ASSERT(pid > -1);
     
     spinlock_release(&proc_table_slock);
-    
     return pid;
 }
 

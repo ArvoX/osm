@@ -1,0 +1,433 @@
+#LyX 2.0 created this file. For more info see http://www.lyx.org/
+\lyxformat 413
+\begin_document
+\begin_header
+\textclass article
+\use_default_options true
+\maintain_unincluded_children false
+\language english
+\language_package default
+\inputencoding auto
+\fontencoding global
+\font_roman default
+\font_sans default
+\font_typewriter default
+\font_default_family default
+\use_non_tex_fonts false
+\font_sc false
+\font_osf false
+\font_sf_scale 100
+\font_tt_scale 100
+
+\graphics default
+\default_output_format default
+\output_sync 0
+\bibtex_command default
+\index_command default
+\paperfontsize default
+\use_hyperref false
+\papersize default
+\use_geometry false
+\use_amsmath 1
+\use_esint 1
+\use_mhchem 1
+\use_mathdots 1
+\cite_engine basic
+\use_bibtopic false
+\use_indices false
+\paperorientation portrait
+\suppress_date false
+\use_refstyle 1
+\index Index
+\shortcut idx
+\color #008000
+\end_index
+\secnumdepth 3
+\tocdepth 3
+\paragraph_separation indent
+\paragraph_indentation default
+\quotes_language english
+\papercolumns 1
+\papersides 1
+\paperpagestyle default
+\tracking_changes false
+\output_changes false
+\html_math_output 0
+\html_css_as_file 0
+\html_be_strict false
+\end_header
+
+\begin_body
+
+\begin_layout Title
+Brugerprocesser i Buenos
+\begin_inset Newline newline
+\end_inset
+
+OSM Anden opgave
+\end_layout
+
+\begin_layout Author
+Davy Eskildsen og Mads Lund
+\end_layout
+
+\begin_layout Standard
+I denne opgave har vi implementeret håndtering af brugerprocesser i Buenos
+ og nogle systemkald, så brugerprogrammer kan interagere med kernen i forhold
+ til processerne.
+\end_layout
+
+\begin_layout Section*
+Brugerprocesser
+\end_layout
+
+\begin_layout Standard
+Brugerprocesserne og de tilhørende kernefunktioner er implementeret i filerne
+ 
+\begin_inset Formula $\texttt{proc/process.c}$
+\end_inset
+
+ og 
+\begin_inset Formula $\texttt{proc/process.h}$
+\end_inset
+
+.
+\end_layout
+
+\begin_layout Standard
+En proces bliver representeret med datatypen 
+\begin_inset Formula $\texttt{process\_t}$
+\end_inset
+
+ som indeholder en tilstand, adressen til et program og en returværdi.
+ I figur 
+\begin_inset CommandInset ref
+LatexCommand ref
+reference "fig:Typedelklerationer-i"
+
+\end_inset
+
+ ses deklerationen fra 
+\begin_inset Formula $\texttt{proc/process.h}$
+\end_inset
+
+.
+\end_layout
+
+\begin_layout Standard
+\begin_inset Float figure
+placement H
+wide false
+sideways false
+status collapsed
+
+\begin_layout Plain Layout
+
+\lang danish
+\begin_inset CommandInset include
+LatexCommand lstinputlisting
+filename "buenos/proc/process.h"
+lstparams "basicstyle={\\small},breaklines=true,language=c,linerange={45-57},numbers=left,numbersep=5pt,prebreak={\\raisebox{0ex}[0ex][0ex]{\\ensuremath{\\hookleftarrow}}},tabsize=2"
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Plain Layout
+\begin_inset Caption
+
+\begin_layout Plain Layout
+\begin_inset CommandInset label
+LatexCommand label
+name "fig:Typedelklerationer-i"
+
+\end_inset
+
+Typedelklerationer i 
+\begin_inset Formula $\texttt{proc/process.h}$
+\end_inset
+
+
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+I 
+\begin_inset Formula $\texttt{proc/process.c}$
+\end_inset
+
+ er defineret en tabel som skal indeholde alle kørende processer.
+ Til det har vi brugt et array af 
+\begin_inset Formula $\texttt{process\_t}$
+\end_inset
+
+ med størrelsen 
+\begin_inset Formula $\texttt{USER\_PROC\_LIMIT}$
+\end_inset
+
+\SpecialChar \@.
+ Det fungerer såles som det maksimalie antal processer, som kan køres.
+ Vi har sat 
+\begin_inset Formula $\texttt{USER\_PROC\_LIMIT}=64$
+\end_inset
+
+.
+ Når tabellen bliver initialiseret sættes alle indgangenes tilstand til
+ 
+\begin_inset Formula $\texttt{PROC\_FREE}$
+\end_inset
+
+.
+ Dette gøres med funktionen 
+\begin_inset Formula $\texttt{process\_init}$
+\end_inset
+
+.
+\end_layout
+
+\begin_layout Standard
+Da denne tabel er en ressource som kan tilgåes af flere processer, definere
+ vi en spinlock, 
+\begin_inset Formula $\texttt{proc\_table\_slock}$
+\end_inset
+
+.
+\end_layout
+
+\begin_layout Standard
+Til håndtering af processerne har vi implementeret funktionerne: 
+\begin_inset Formula $\texttt{process\_spawn}$
+\end_inset
+
+, 
+\begin_inset Formula $\texttt{process\_run}$
+\end_inset
+
+, 
+\begin_inset Formula $\texttt{process\_finish}$
+\end_inset
+
+ og 
+\begin_inset Formula $\texttt{process\_join}$
+\end_inset
+
+.
+ Desuden har vi ændret funktionen 
+\begin_inset Formula $\texttt{process\_start}$
+\end_inset
+
+ så den tager id'et på en proces i stedet for adressen til et program.
+ 
+\begin_inset Formula $\texttt{process\_start}$
+\end_inset
+
+ henter så adressen fra procestabellen i stedet.
+ Da 
+\begin_inset Formula $\texttt{process\_start}$
+\end_inset
+
+ skal kaldes af 
+\begin_inset Formula $\texttt{thread\_create}$
+\end_inset
+
+ er nødvendigt at argumentet er af typen 
+\begin_inset Formula $\texttt{uint32}$
+\end_inset
+
+ og bliver så castet derfra.
+\end_layout
+
+\begin_layout Subsubsection*
+\begin_inset Formula $\texttt{process\_spawn}$
+\end_inset
+
+ 
+\end_layout
+
+\begin_layout Standard
+Denne funktion kører et givent program som en process i en ny tråd.
+ Først gennemsøges procestabellen efter en ledig plads (tilstanden er 
+\begin_inset Formula $\texttt{PROC\_FREE}$
+\end_inset
+
+).
+ Der er ikke Implementeret nogen fejlhåndtering i tilfælde af, at der ikke
+ er nogen ledig plads.
+ I stedet dræbes systemet.
+ Herefter initialiseret processen i tabellen ved at sætte tilstanden til
+ 
+\begin_inset Formula $\texttt{PROC\_RUNNING}$
+\end_inset
+
+ og adressen til programmet.
+ Processen startes med funktionen 
+\begin_inset Formula $\texttt{process\_start}$
+\end_inset
+
+ som køres i en ny tråd ved hjælp af 
+\begin_inset Formula $\texttt{thread\_create}$
+\end_inset
+
+.
+\end_layout
+
+\begin_layout Subsubsection*
+\begin_inset Formula $\texttt{process\_run}$
+\end_inset
+
+ 
+\end_layout
+
+\begin_layout Standard
+Denne funktion kører et givent program som en process i den aktuelle.
+ Tilsvarende 
+\begin_inset Formula $\texttt{process\_spawn}$
+\end_inset
+
+ findes fri plads i procestabellen som initialiseres.
+ Til sidst kaldes 
+\begin_inset Formula $\texttt{process\_start}$
+\end_inset
+
+.
+\end_layout
+
+\begin_layout Subsubsection*
+\begin_inset Formula $\texttt{process\_finish}$
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+Her Davy....
+\end_layout
+
+\begin_layout Subsubsection*
+\begin_inset Formula $\texttt{process\_join}$
+\end_inset
+
+ 
+\end_layout
+
+\begin_layout Standard
+Denne funktion venter på at en given proces slutter of returnerer dennes
+ returværdi.
+ Hvis processen ikke er færdig (tilstanden er 
+\begin_inset Formula $\texttt{PROC\_ZOMBIE}$
+\end_inset
+
+) så bruger vi en 
+\begin_inset Quotes eld
+\end_inset
+
+sleep queue
+\begin_inset Quotes erd
+\end_inset
+
+ til at vente på at tilstanden ændres.
+ Hertil har vi fulgt eksemplet fra kapitlet om 
+\begin_inset Quotes eld
+\end_inset
+
+Sleep Queue
+\begin_inset Quotes erd
+\end_inset
+
+ i Roadmap to Buenos side 29.
+ Når processen er færdig er dens returværdig gemt i procestabellen så vi
+ kan hente der derfra.
+ Inden vi returnerer frigives indgangen i tabellen.
+\end_layout
+
+\begin_layout Section*
+Systemkald
+\end_layout
+
+\begin_layout Standard
+Vi har implementeret systemkaldene 
+\begin_inset Formula $\texttt{SYSCALL\_EXEC}$
+\end_inset
+
+, 
+\begin_inset Formula $\texttt{SYSCALL\_EXIT}$
+\end_inset
+
+, 
+\begin_inset Formula $\texttt{SYSCALL\_JOIN}$
+\end_inset
+
+, 
+\begin_inset Formula $\texttt{SYSCALL\_READ}$
+\end_inset
+
+ og 
+\begin_inset Formula $\texttt{SYSCALL\_WRITE}$
+\end_inset
+
+ i funktionen 
+\begin_inset Formula $\texttt{syscall\_handle}$
+\end_inset
+
+ i filen 
+\begin_inset Formula $\texttt{proc/syscall.c}$
+\end_inset
+
+.
+ De bliver kaldt ved hjælp af funktionerne beskrevet i haeder-filen 
+\begin_inset Formula $\texttt{tests/lib.h}$
+\end_inset
+
+.
+\end_layout
+
+\begin_layout Standard
+For de systemkald som tager argumenter, parses argumenterne fra MIPS-registrene
+ i 
+\begin_inset Quotes eld
+\end_inset
+
+user space
+\begin_inset Quotes erd
+\end_inset
+
+ som argumenter til de relevante kerneoperationer.
+ Tilsvarende gemmes returværdier fra kernoperationer i MIPS-registret for
+ returværdier.
+ 
+\begin_inset Formula $\texttt{SYSCALL\_EXEC}$
+\end_inset
+
+, 
+\begin_inset Formula $\texttt{SYSCALL\_EXIT}$
+\end_inset
+
+ og 
+\begin_inset Formula $\texttt{SYSCALL\_JOIN}$
+\end_inset
+
+ kalder stortset de tilsvarende kerneoperationer.
+ Dem vil vi derfor ikke gennemgå yderligere her.
+ 
+\begin_inset Formula $\texttt{SYSCALL\_READ}$
+\end_inset
+
+ og 
+\begin_inset Formula $\texttt{SYSCALL\_WRITE}$
+\end_inset
+
+ .....Davy
+\end_layout
+
+\end_body
+\end_document
