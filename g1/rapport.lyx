@@ -1,0 +1,257 @@
+#LyX 2.0 created this file. For more info see http://www.lyx.org/
+\lyxformat 413
+\begin_document
+\begin_header
+\textclass article
+\use_default_options true
+\maintain_unincluded_children false
+\language english
+\language_package default
+\inputencoding auto
+\fontencoding global
+\font_roman default
+\font_sans default
+\font_typewriter default
+\font_default_family default
+\use_non_tex_fonts false
+\font_sc false
+\font_osf false
+\font_sf_scale 100
+\font_tt_scale 100
+
+\graphics default
+\default_output_format default
+\output_sync 0
+\bibtex_command default
+\index_command default
+\paperfontsize default
+\use_hyperref false
+\papersize default
+\use_geometry false
+\use_amsmath 1
+\use_esint 1
+\use_mhchem 1
+\use_mathdots 1
+\cite_engine basic
+\use_bibtopic false
+\use_indices false
+\paperorientation portrait
+\suppress_date false
+\use_refstyle 1
+\index Index
+\shortcut idx
+\color #008000
+\end_index
+\secnumdepth 3
+\tocdepth 3
+\paragraph_separation indent
+\paragraph_indentation default
+\quotes_language english
+\papercolumns 1
+\papersides 1
+\paperpagestyle default
+\tracking_changes false
+\output_changes false
+\html_math_output 0
+\html_css_as_file 0
+\html_be_strict false
+\end_header
+
+\begin_body
+
+\begin_layout Title
+OSM
+\begin_inset Newline newline
+\end_inset
+
+Første opgave
+\end_layout
+
+\begin_layout Author
+Davy Eskildsen og Mads Lund
+\end_layout
+
+\begin_layout Section
+Linked list
+\end_layout
+
+\begin_layout Standard
+Argumentet 
+\begin_inset Formula $\texttt{start}$
+\end_inset
+
+ til 
+\begin_inset Formula $\texttt{append}$
+\end_inset
+
+ og 
+\begin_inset Formula $\texttt{prepend}$
+\end_inset
+
+ er af typen 
+\begin_inset Formula $\texttt{Listnode**}$
+\end_inset
+
+, da en liste er defineret som en pejer til det første element i listen,
+ 
+\begin_inset Formula $\texttt{Listnode*}$
+\end_inset
+
+.
+ Da 
+\begin_inset Formula $\texttt{append}$
+\end_inset
+
+ og 
+\begin_inset Formula $\texttt{prepend}$
+\end_inset
+
+ kan ændre på det første element i en given liste skal listen derfor defineres
+ demed en ny pejer.
+ Vi kan således ændre den given listepejer ved at dereferere den og sætte
+ den til den nye pejer.
+\end_layout
+
+\begin_layout Subsection*
+(b) Fejl i 
+\begin_inset Formula $\texttt{remv}$
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+I den udleverede implementationen 
+\begin_inset Formula $\texttt{remv}$
+\end_inset
+
+ var der et problem med betingelsen i while-lykken, 
+\begin_inset Formula 
+\[
+\texttt{!match(curr->content) \&\& curr!=NULL}
+\]
+
+\end_inset
+
+Denne betingelse skulle give falsk, hvis 
+\begin_inset Formula $\texttt{match}$
+\end_inset
+
+ returnerer sandt for indeholdet af det aktuelle element, eller hvis elementet
+ er en null-pointer.
+ Problemet er, at 
+\begin_inset Formula $\texttt{match(curr->content)}$
+\end_inset
+
+ bliver evalueret før 
+\begin_inset Formula $\texttt{curr!=NULL}$
+\end_inset
+
+, hvilket giver en null-pointer exception.
+ Det kan løses ved bare at ombytte de to udtryk.
+\end_layout
+
+\begin_layout Subsection*
+Hvis 
+\begin_inset Formula $\texttt{malloc}$
+\end_inset
+
+ returnerer 
+\begin_inset Formula $\texttt{FALSE}$
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+I funktionerene 
+\begin_inset Formula $\texttt{append}$
+\end_inset
+
+ og 
+\begin_inset Formula $\texttt{prepend}$
+\end_inset
+
+ allokeres plads til de nye elementer med funktionen 
+\begin_inset Formula $\texttt{malloc}$
+\end_inset
+
+.
+ Denne funktion returnerer 
+\begin_inset Formula $\texttt{NULL}$
+\end_inset
+
+ hvis det ikke kan lade sig gøre.
+ Da vi ikke lave nogen checks på returværdien, vil der bliver kastet en
+ null-pointer exception når vi efterfølgende prøver at sætte 
+\begin_inset Formula $\texttt{content}$
+\end_inset
+
+.
+ Vi har valgt at gøre det på denne måde, da 
+\begin_inset Formula $\texttt{prepend}$
+\end_inset
+
+ og 
+\begin_inset Formula $\texttt{append}$
+\end_inset
+
+ i den given header-fil er 
+\begin_inset Formula $\texttt{void}$
+\end_inset
+
+-funktioner.
+ Alternativt kunne den fx havde returneret en boolsk værdi eller en fejlkode.
+\end_layout
+
+\begin_layout Section
+Braun tree
+\end_layout
+
+\begin_layout Standard
+I filen 
+\begin_inset Formula $\texttt{testbrauneq.c}$
+\end_inset
+
+ er implementeret test af vores implementation af Braun trees.
+ I main-funktionen testes eksplicit for funktionerne 
+\begin_inset Formula $\texttt{remvL}$
+\end_inset
+
+, 
+\begin_inset Formula $\texttt{remvR}$
+\end_inset
+
+, 
+\begin_inset Formula $\texttt{addL}$
+\end_inset
+
+ og 
+\begin_inset Formula $\texttt{addR}$
+\end_inset
+
+ på både et tomt træ og et træ med elementer.
+ Antallet af elementer som bliver tiføjet angives med første argument til
+ programmet.
+ Desuden testes 
+\begin_inset Formula $\texttt{lookup}$
+\end_inset
+
+.
+ Til at verificere testene har vi implementeret hjælpefunktionerne 
+\begin_inset Formula $\texttt{printaslist}$
+\end_inset
+
+ og 
+\begin_inset Formula $\texttt{drawtree}$
+\end_inset
+
+ som er implementeret i 
+\begin_inset Formula $\texttt{drawtree.c}$
+\end_inset
+
+.
+\end_layout
+
+\end_body
+\end_document
