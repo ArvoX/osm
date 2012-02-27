@@ -8,7 +8,7 @@
 int main(void)
 {
 	int child_p, retval;
-	child_p = syscall_exec("./testexit");
+	child_p = syscall_exec("[test]testexit");
 	retval = syscall_join(child_p);
 	
 	syscall_exit(retval);

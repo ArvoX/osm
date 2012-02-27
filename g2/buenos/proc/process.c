@@ -84,7 +84,7 @@ void process_start(uint32_t pid)
     int i;
     
     
-	DEBUG("debugsyscall","process_start - initial \n");
+	DEBUG("debugsyscall","t:%d. Process_start - initial\n",(int)thread_get_current_thread());
 	
     spinlock_acquire(&proc_table_slock);
 
@@ -204,6 +204,10 @@ void process_start(uint32_t pid)
     user_context.cpu_regs[MIPS_REGISTER_SP] = USERLAND_STACK_TOP;
     user_context.pc = elf.entry_point;
 
+	
+	DEBUG("debugsyscall","process_start - done thread_goto_userland\n");
+
+	
     thread_goto_userland(&user_context);
 
     KERNEL_PANIC("thread_goto_userland failed.");
@@ -249,7 +253,7 @@ process_id_t process_spawn(const char *executable) {
 /* Run process in this thread , only returns if there is an error */
 int process_run( const char *executable ){
 	
-	DEBUG("debugsyscall","process_run - initial \n");
+	DEBUG("debugsyscall","t:%d. process_run - initial \n",thread_get_current_thread());
     spinlock_acquire(&proc_table_slock);
     
     process_id_t pid = -1;
@@ -267,7 +271,7 @@ int process_run( const char *executable ){
     
     spinlock_release(&proc_table_slock);
     
-	DEBUG("debugsyscall","process_run - pid %d\n",i);
+	DEBUG("debugsyscall","t:%d. Process_run - pid %d\n",thread_get_current_thread(),i);
     process_start(i);
     
     return -1;
@@ -281,22 +285,37 @@ process_id_t process_get_current_process(void){
 void process_finish(int retval)
 {  
     
-    DEBUG("debugsyscall","process_finish - initial \n");
+    DEBUG("debugsyscall","t:%d. Process_finish - initial \n",thread_get_current_thread());
     
     thread_table_t *my_entry;
     process_id_t pid;
     
     my_entry = thread_get_current_thread_entry();
     pid = my_entry->process_id;
-    
+	
     vm_destroy_pagetable(my_entry->pagetable);
     my_entry->pagetable = NULL;
-    
+
+	interrupt_status_t intr_status;
+    DEBUG("debugsyscall","t:%d. Process_finish - Disable interrupts",thread_get_current_thread());
+    intr_status = _interrupt_disable();	
+
+	
+	DEBUG("debugsyscall","t:%d. Process_finish - Acquire spinlock\n",thread_get_current_thread());
+	
     spinlock_acquire(&proc_table_slock); 
     proc_table[pid].state = PROC_ZOMBIE;    
     proc_table[pid].retval = retval;
     spinlock_release(&proc_table_slock);
-    
+	
+	DEBUG("debugsyscall","t:%d. Process_finish - sleepq_wake \n",thread_get_current_thread());
+	
+	sleepq_wake(&proc_table[pid]);
+	
+    _interrupt_set_state(intr_status);
+
+	DEBUG("debugsyscall","t:%d. Process_finish - done \n",thread_get_current_thread());
+	
     thread_finish();
 }
 /* Wait for the given process to terminate , returning its return value,
@@ -309,10 +328,10 @@ uint32_t process_join(process_id_t pid)
 
 
     interrupt_status_t intr_status;
-    DEBUG("debugsyscall","disable interrupt...");
+    DEBUG("debugsyscall","t:%d. disable interrupt...",thread_get_current_thread());
     intr_status = _interrupt_disable();
     DEBUG("debugsyscall","done. status: %d\n",(int)intr_status);
-    DEBUG("debugsyscall","acquiring spinlock...");
+    DEBUG("debugsyscall","t:%d. acquiring spinlock...",thread_get_current_thread());
     spinlock_acquire(&proc_table_slock);
     DEBUG("debugsyscall","done\n");
 

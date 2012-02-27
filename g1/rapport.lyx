@@ -151,59 +151,6 @@ Denne betingelse skulle give falsk, hvis
  Det kan løses ved bare at ombytte de to udtryk.
 \end_layout
 
-\begin_layout Subsection*
-Hvis 
-\begin_inset Formula $\texttt{malloc}$
-\end_inset
-
- returnerer 
-\begin_inset Formula $\texttt{FALSE}$
-\end_inset
-
-
-\end_layout
-
-\begin_layout Standard
-I funktionerene 
-\begin_inset Formula $\texttt{append}$
-\end_inset
-
- og 
-\begin_inset Formula $\texttt{prepend}$
-\end_inset
-
- allokeres plads til de nye elementer med funktionen 
-\begin_inset Formula $\texttt{malloc}$
-\end_inset
-
-.
- Denne funktion returnerer 
-\begin_inset Formula $\texttt{NULL}$
-\end_inset
-
- hvis det ikke kan lade sig gøre.
- Da vi ikke lave nogen checks på returværdien, vil der bliver kastet en
- null-pointer exception når vi efterfølgende prøver at sætte 
-\begin_inset Formula $\texttt{content}$
-\end_inset
-
-.
- Vi har valgt at gøre det på denne måde, da 
-\begin_inset Formula $\texttt{prepend}$
-\end_inset
-
- og 
-\begin_inset Formula $\texttt{append}$
-\end_inset
-
- i den given header-fil er 
-\begin_inset Formula $\texttt{void}$
-\end_inset
-
--funktioner.
- Alternativt kunne den fx havde returneret en boolsk værdi eller en fejlkode.
-\end_layout
-
 \begin_layout Section
 Braun tree
 \end_layout
@@ -257,13 +204,70 @@ I filen
 Genaflevering rettelser
 \end_layout
 
+\begin_layout Subsection
+Linked list - Hvis 
+\begin_inset Formula $\texttt{malloc}$
+\end_inset
+
+ returnerer 
+\begin_inset Formula $\texttt{FALSE}$
+\end_inset
+
+
+\end_layout
+
 \begin_layout Standard
-Vi har rettet fun 
+I funktionerene 
+\begin_inset Formula $\texttt{append}$
+\end_inset
+
+ og 
+\begin_inset Formula $\texttt{prepend}$
+\end_inset
+
+ allokeres plads til de nye elementer med funktionen 
+\begin_inset Formula $\texttt{malloc}$
+\end_inset
+
+.
+ Denne funktion returnerer 
+\begin_inset Formula $\texttt{NULL}$
+\end_inset
+
+ hvis det ikke kan lade sig gøre.
+ Da vi ikke lave nogen checks på returværdien, vil der bliver kastet en
+ null-pointer exception når vi efterfølgende prøver at sætte 
+\begin_inset Formula $\texttt{content}$
+\end_inset
+
+.
+ Vi har valgt at gøre det på denne måde, da 
+\begin_inset Formula $\texttt{prepend}$
+\end_inset
+
+ og 
+\begin_inset Formula $\texttt{append}$
+\end_inset
+
+ i den given header-fil er 
+\begin_inset Formula $\texttt{void}$
+\end_inset
+
+-funktioner.
+ Alternativt kunne den fx havde returneret en boolsk værdi eller en fejlkode.
+\end_layout
+
+\begin_layout Subsection
+Braun tree
+\end_layout
+
+\begin_layout Standard
+Vi har rettet funktionen 
 \begin_inset Formula $\texttt{stact\_init}$
 \end_inset
 
- til så den rigtigt for initaliseret en stak ved at sørge for at pegeren
- til listen bliver sat til 
+ til så den initaliseret en stak rigtigt ved at sørge for at pegeren til
+ listen bliver sat til 
 \begin_inset Formula $\texttt{NULL}$
 \end_inset
 
@@ -275,7 +279,7 @@ Vi har også gennemgået vores
 \begin_inset Formula $\texttt{del}$
 \end_inset
 
- funktion i braun træet og sørget for at denne for fritgivet hukommelsen
+-funktion i Braun træet og sørget for at denne for fritgivet hukommelsen
  rigtigt.
 \end_layout
 

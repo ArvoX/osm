@@ -69,23 +69,23 @@ void syscall_handle(context_t *user_context)
 	 */
 	switch(user_context->cpu_regs[MIPS_REGISTER_A0]) {
 		case SYSCALL_HALT:
-			DEBUG("debugsyscall","SYSCALL_HALT\n");
+			DEBUG("debugsyscall","t:%d. SYSCALL_HALT\n",thread_get_current_thread());
 			halt_kernel();
 			break;
 		case SYSCALL_EXEC:
 		{
-			DEBUG("debugsyscall","SYSCALL_EXEC - thread: %d\n",thread_get_current_thread());
+			DEBUG("debugsyscall","t:%d. SYSCALL_EXE\n",thread_get_current_thread());
 			const char *file = (char*)user_context->cpu_regs[MIPS_REGISTER_A1];
 			int pid = process_spawn(file);
 			user_context->cpu_regs[MIPS_REGISTER_V0] = pid;
 			break;
 		}
 		case SYSCALL_EXIT:
-			DEBUG("debugsyscall","SYSCALL_EXIT - thread: %d\n",thread_get_current_thread());
+			DEBUG("debugsyscall","t:%d. SYSCALL_EXIT\n",thread_get_current_thread());
 			process_finish(user_context->cpu_regs[MIPS_REGISTER_A1]);
 			break;
 		case SYSCALL_JOIN:
-			DEBUG("debugsyscall","SYSCALL_JOIN - thread: %d\n",thread_get_current_thread());
+			DEBUG("debugsyscall","t:%d. SYSCALL_JOIN\n",thread_get_current_thread());
 			user_context->cpu_regs[MIPS_REGISTER_V0] = 
 				process_join((process_id_t)user_context->cpu_regs[MIPS_REGISTER_A1]);            
 			break;
