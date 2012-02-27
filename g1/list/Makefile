@@ -25,3 +25,9 @@ clean:
 	rm -f calc
 
 all: $(EXECUTABLE)
+ctags:
+	find . -type f -name '*.[ch]' | xargs ctags
+etags:
+	find . -type f -name '*.[ch]' | xargs etags
+tags: ctags etags
+	
