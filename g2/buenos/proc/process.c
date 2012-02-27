@@ -253,7 +253,7 @@ process_id_t process_spawn(const char *executable) {
 /* Run process in this thread , only returns if there is an error */
 int process_run( const char *executable ){
 	
-	DEBUG("debugsyscall","process_run - initial \n");
+	DEBUG("debugsyscall","t:%d. process_run - initial \n",thread_get_current_thread());
     spinlock_acquire(&proc_table_slock);
     
     process_id_t pid = -1;
@@ -271,7 +271,7 @@ int process_run( const char *executable ){
     
     spinlock_release(&proc_table_slock);
     
-	DEBUG("debugsyscall","process_run - pid %d\n",i);
+	DEBUG("debugsyscall","t:%d. Process_run - pid %d\n",thread_get_current_thread(),i);
     process_start(i);
     
     return -1;
@@ -285,7 +285,7 @@ process_id_t process_get_current_process(void){
 void process_finish(int retval)
 {  
     
-    DEBUG("debugsyscall","process_finish - initial \n");
+    DEBUG("debugsyscall","t:%d. Process_finish - initial \n",thread_get_current_thread());
     
     thread_table_t *my_entry;
     process_id_t pid;
@@ -313,10 +313,10 @@ uint32_t process_join(process_id_t pid)
 
 
     interrupt_status_t intr_status;
-    DEBUG("debugsyscall","disable interrupt...");
+    DEBUG("debugsyscall","t:%d. disable interrupt...",thread_get_current_thread());
     intr_status = _interrupt_disable();
     DEBUG("debugsyscall","done. status: %d\n",(int)intr_status);
-    DEBUG("debugsyscall","acquiring spinlock...");
+    DEBUG("debugsyscall","t:%d. acquiring spinlock...",thread_get_current_thread());
     spinlock_acquire(&proc_table_slock);
     DEBUG("debugsyscall","done\n");
 
