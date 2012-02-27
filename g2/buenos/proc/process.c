@@ -205,7 +205,7 @@ void process_start(uint32_t pid)
     user_context.pc = elf.entry_point;
 
 	
-	DEBUG("debugsyscall","process_start - done thread_goto_userland");
+	DEBUG("debugsyscall","process_start - done thread_goto_userland\n");
 
 	
     thread_goto_userland(&user_context);
