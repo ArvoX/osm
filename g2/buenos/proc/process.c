@@ -214,23 +214,23 @@ void process_start(uint32_t pid)
 }
 
 /* Run process in new thread, returns PID of new process */
-process_id_t process_spawn(const char *executable) {
-    
-
+process_id_t process_spawn(const char *executable) {	
 	
-	
-    spinlock_acquire(&proc_table_slock);
-	
+	// Acquiring the spinlock of the process table.
+    spinlock_acquire(&proc_table_slock);	
     process_id_t pid = -1;
-    int i;
-    
+	
+	// Find an empty entrance in the process tabel.
+    int i;    
     for(i = 0; i < USER_PROC_LIMIT; i++) {
         if (proc_table[i].state == PROC_FREE) {
+			// Initialize the process
             pid = i;
             proc_table[pid].state = PROC_RUNNING;        
-            proc_table[pid].executable = executable;        
+            proc_table[pid].executable = executable;
+			// Creating new thread. The new thread is going to run process_start()
             TID_t current_thread = thread_create(&process_start, pid);
-			// Vi skal tjekke om current_thread == -1. Nu antager vi at den er >-1
+			// Vi skal evt. tjekke om current_thread == -1.
 			thread_run(current_thread);
             break;
         }
@@ -238,8 +238,6 @@ process_id_t process_spawn(const char *executable) {
     KERNEL_ASSERT(pid > -1);
     
     spinlock_release(&proc_table_slock);
-	 	 
-	
 	
     return pid;
 }
@@ -247,25 +245,27 @@ process_id_t process_spawn(const char *executable) {
 /* Run process in this thread , only returns if there is an error */
 int process_run( const char *executable ){
 	
-	DEBUG("debugsyscall","t:%d. process_run - initial \n",thread_get_current_thread());
+	// Acquiring the spinlock of the process table.
     spinlock_acquire(&proc_table_slock);
     
     process_id_t pid = -1;
-    int i;
-    
+	
+	// Find an empty entrance in the process tabel.
+    int i;    
     for(i = 0; i < USER_PROC_LIMIT; i++) {
         if (proc_table[i].state == PROC_FREE) {
-        proc_table[i].state      = PROC_RUNNING;
-        proc_table[i].executable = executable;
-        pid = i;
+			// Initialize the process
+			proc_table[i].state      = PROC_RUNNING;
+			proc_table[i].executable = executable;
+			pid = i;
             break; 
         }
     }
     KERNEL_ASSERT(pid > -1);
     
     spinlock_release(&proc_table_slock);
-    
-	DEBUG("debugsyscall","t:%d. Process_run - pid %d\n",thread_get_current_thread(),i);
+
+	// Starting the process. This function should never return.
     process_start(i);
     
     return -1;
@@ -323,6 +323,8 @@ uint32_t process_join(process_id_t pid)
 
     interrupt_status_t intr_status;
     DEBUG("debugsyscall","t:%d. disable interrupt...",thread_get_current_thread());
+	
+	//We have to disable interrupts for this thread to avoid a situation where the thread is added to the sleep queue and interupted before the spinlock is released.
     intr_status = _interrupt_disable();
     DEBUG("debugsyscall","done. status: %d\n",(int)intr_status);
     DEBUG("debugsyscall","t:%d. acquiring spinlock...",thread_get_current_thread());
@@ -349,7 +351,7 @@ uint32_t process_join(process_id_t pid)
     DEBUG("debugsyscall","proc state == PROC_ZOMBIE\n");
 
     retval = (uint32_t)proc_table[pid].retval;
-    
+    // Resetting the entrance in the process tabel.
     proc_table[pid].retval = 0;
     proc_table[pid].state = PROC_FREE;
     
