@@ -61,6 +61,10 @@ void gettty();
  */
 void syscall_handle(context_t *user_context)
 {
+	
+	
+	interrupt_status_t intr_status;
+
 	/* When a syscall is executed in userland, register a0 contains
 	 * the number of the syscall. Registers a1, a2 and a3 contain the
 	 * arguments of the syscall. The userland code expects that after
@@ -88,7 +92,7 @@ void syscall_handle(context_t *user_context)
 			process_finish(user_context->cpu_regs[MIPS_REGISTER_A1]);
 			break;
 		case SYSCALL_JOIN:
-			interrupt_status_t intr_status;
+			
 			DEBUG("debugsyscall","SYSCALL_JOIN - disable interrupt...");
 			intr_status = _interrupt_disable();
 			
