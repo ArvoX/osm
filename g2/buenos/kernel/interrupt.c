@@ -45,6 +45,8 @@
 #include "lib/libc.h"
 #include "vm/tlb.h"
 
+#include "lib/debug.h"
+
 /* Interrupt vector addresses (only these three should be ever used) */
 #define INTERRUPT_VECTOR_ADDRESS1 0x80000000
 #define INTERRUPT_VECTOR_ADDRESS2 0x80000180
