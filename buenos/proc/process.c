@@ -354,7 +354,7 @@ released. */
     DEBUG("debugsyscall","done\n");
 
 
-    while (proc_table[pid].state != PROC_ZOMBIE) {        
+    while (proc_table[pid].state != PROC_ZOMBIE) {
         sleepq_add(&proc_table[pid]);
         
         DEBUG("debugsyscall","process_join - while loop. ");

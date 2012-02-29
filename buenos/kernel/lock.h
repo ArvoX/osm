@@ -1,4 +1,5 @@
 typedef struct {
+	int locked;
 } lock_t;
 
 int lock_reset(lock_t *lock);
