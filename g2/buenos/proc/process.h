@@ -42,6 +42,8 @@
 #define USERLAND_STACK_TOP 0x7fffeffc
 #define USER_PROC_LIMIT 4
 
+#define PROC_EXEC_NAME_MAX 80
+
 typedef int process_id_t;
 
 typedef enum {
@@ -52,7 +54,7 @@ typedef enum {
 
 typedef struct {
 	proc_state_t state;
-	const char *executable;
+	char executable[PROC_EXEC_NAME_MAX];
 	int retval;
 	process_id_t first_child;
 	process_id_t sibling;
