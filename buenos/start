@@ -2,6 +2,10 @@
 DISK="fyams.harddisk"
 TOOL="util/tfstool"
 NAME=`$TOOL list $DISK | grep -o ': [a-zA-Z0-9]*,' | grep -o '[a-zA-Z0-9]*'`
+if [ "$NAME" == "" ]
+then
+	NAME="test"
+fi
 SIZE=`$TOOL list $DISK | grep -o 'blocks: .*' | grep -o '[0-9]*'`
 PROG="term"
 
