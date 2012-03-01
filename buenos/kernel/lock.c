@@ -14,6 +14,7 @@
 /** Initialize an already allocated lock_t structure.*/
 int lock_reset(lock_t *lock){
 	lock->locked = 0;
+	return 0;
 }
 
 /** Aquire the lock.*/
