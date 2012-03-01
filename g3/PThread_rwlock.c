@@ -28,14 +28,14 @@ void *rdlockThread(void *arg)
   while(i-- > 0) {
     printf("Reader %d getting read lock\n", me);
     rc = pthread_rwlock_rdlock(&rwlock);
-    checkResults("pthread_rwlock_rdlock()\n", rc);
+//    checkResults("pthread_rwlock_rdlock()\n", rc);
     printf("%d reading\n", me);
     
     // read for a while
     usleep(50);
     
     rc = pthread_rwlock_unlock(&rwlock);
-    checkResults("pthread_rwlock_unlock()\n", rc);
+//    checkResults("pthread_rwlock_unlock()\n", rc);
     printf("Reader %d unlocked\n", me);
   }
   return NULL;
@@ -50,14 +50,14 @@ void *wrlockThread(void *arg)
   while (i-- > 0) {
     printf("Writer %d getting write lock\n", me);
     rc = pthread_rwlock_wrlock(&rwlock);
-    checkResults("pthread_rwlock_wrlock()\n", rc);
+//    checkResults("pthread_rwlock_wrlock()\n", rc);
     
     printf("%d writing\n", me);
     // write for a while
     usleep(100);
 
     rc = pthread_rwlock_unlock(&rwlock);
-    checkResults("pthread_rwlock_unlock()\n", rc);
+//    checkResults("pthread_rwlock_unlock()\n", rc);
     printf("Writer %d unlocked\n", me);
   }
   return NULL;
