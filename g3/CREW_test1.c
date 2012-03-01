@@ -4,9 +4,17 @@
 #include <unistd.h>
 #include <errno.h>
 #include <string.h>
+#include <stdint.h>
 
-#define NUM_THREADS 200
+#define NUM_THREADS 10
 #define NUM_ITER 10
+
+__inline__ uint64_t get_cycles()
+{
+	unsigned l,h;
+	__asm__ __volatile__("rdtsc": "=a" (l), "=d" (h));
+	return l + (((uint64_t)h) << 32);
+}
 
 // error function, checking if val is 0, expecting it to be errno otherwise.
 void checkResults(char* msg, int val) {
@@ -38,7 +46,7 @@ void *rdlockThread(void *arg)
 //		printf("Readers increase -> %d\n", readers);
 		rc = pthread_rwlock_unlock(&rlock);
 		
-		printf("%d\t2\n", (int)clock());
+		printf("%llu\t2\n", get_cycles());
 		// read for a while
 		usleep(50);
 				
@@ -67,7 +75,7 @@ void *wrlockThread(void *arg)
 //		printf("Writer %d getting write lock\n", me);
 		rc = pthread_rwlock_wrlock(&wlock);
 		
-		printf("%d\t1\n", (int)clock());
+		printf("%llu\t1\n", get_cycles());
 		// write for a while
 		usleep(100);
 		

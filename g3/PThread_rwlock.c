@@ -4,9 +4,17 @@
 #include <unistd.h>
 #include <errno.h>
 #include <string.h>
+#include <stdint.h>
 
 #define NUM_THREADS 10
 #define NUM_ITER 10
+
+__inline__ uint64_t get_cycles()
+{
+	unsigned l,h;
+	__asm__ __volatile__("rdtsc": "=a" (l), "=d" (h));
+	return l + (((uint64_t)h) << 32);
+}
 
 // error function, checking if val is 0, expecting it to be errno otherwise.
 void checkResults(char* msg, int val) {
@@ -26,11 +34,11 @@ void *rdlockThread(void *arg)
   int i = NUM_ITER;
 
   while(i-- > 0) {
-    printf("Reader %d getting read lock. ", me);
+//    printf("Reader %d getting read lock. ", me);
 	  rc = pthread_rwlock_rdlock(&rwlock);
-	  printf("\n");
+//	  printf("\n");
 //    checkResults("pthread_rwlock_rdlock()\n", rc);
-    printf("%d reading\n", me);
+    printf("%llu\t1\n", get_cycles());
     
     // read for a while
     usleep(50);
@@ -49,12 +57,12 @@ void *wrlockThread(void *arg)
   int i = NUM_ITER;
 
   while (i-- > 0) {
-    printf("Writer %d getting write lock. ", me);
+//    printf("Writer %d getting write lock. ", me);
     rc = pthread_rwlock_wrlock(&rwlock);
-	  printf("\n");
+//	  printf("\n");
 //    checkResults("pthread_rwlock_wrlock()\n", rc);
     
-    printf("%d writing\n", me);
+    printf("%llu\t2\n", get_cycles());
     // write for a while
     usleep(100);
 
@@ -76,8 +84,8 @@ int main(int argc, char **argv)
     num = atoi(argv[1]);
   }
 
-  printf("Main initializing rwlock, will use %d readers and writers\n", 
-         num);
+//  printf("Main initializing rwlock, will use %d readers and writers\n", 
+//         num);
   rc = pthread_rwlock_init(&rwlock, NULL);
   checkResults("pthread_rwlock_init()\n", rc);
 
@@ -102,7 +110,7 @@ int main(int argc, char **argv)
   rc = pthread_rwlock_destroy(&rwlock);
   checkResults("pthread_rwlock_destroy()\n", rc);
 
-  printf("Main completed\n");
+//  printf("Main completed\n");
   return 0;
 }
 
