@@ -13,7 +13,7 @@
 
 /** Initialize an already allocated lock_t structure.*/
 int lock_reset(lock_t *lock){
-	lock.locked = 0;
+	lock->locked = 0;
 }
 
 /** Aquire the lock.*/
@@ -27,7 +27,7 @@ void lock_acquire(lock_t *lock){
     intr_status = _interrupt_disable();	
     spinlock_acquire((spinlock_t) lock);
 	
-	while (lock.locked) {				
+	while (lock->locked) {				
 		sleepq_add(lock);		
 		spinlock_release((spinlock_t)lock);
         thread_switch();
