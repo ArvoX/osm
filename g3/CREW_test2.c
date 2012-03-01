@@ -5,9 +5,17 @@
 #include <errno.h>
 #include <string.h>
 #include <time.h>
+#include <stdint.h>
 
-#define NUM_THREADS 200
+#define NUM_THREADS 10
 #define NUM_ITER 10
+
+__inline__ uint64_t get_cycles()
+{
+	unsigned l,h;
+	__asm__ __volatile__("rdtsc": "=a" (l), "=d" (h));
+	return l + (((uint64_t)h) << 32);
+}
 
 // error function, checking if val is 0, expecting it to be errno otherwise.
 void checkResults(char* msg, int val) {
@@ -28,20 +36,20 @@ void *rdlockThread(void *arg)
 	int i = NUM_ITER;
 	
 	while(i-- > 0) {
-//		printf("%d\tr\t%d\tacce\n", (int)clock(), me);
+//		printf("%d\tr\t%d\tacce\n", (int)get_cycles(), me);
 		
 		rc = pthread_mutex_lock(&waccess);
 		rc = pthread_mutex_lock(&rlock);
 		if (++readers == 1){
 			
-			rc = pthread_rwlock_rdlock(&wlock);
+			rc = pthread_mutex_lock(&wlock);
 		}			
 //		printf("Readers increase -> %d\n", readers);
 		rc = pthread_mutex_unlock(&rlock);
 		rc = pthread_mutex_unlock(&waccess);
 		
-		printf("%d\t2\n", (int)clock());
-//		printf("%d\tr\t%d\tread\n", (int)clock(), me);
+		printf("%llu\t2\n", get_cycles());
+//		printf("%d\tr\t%d\tread\n", (int)get_cycles(), me);
 		// read for a while
 		usleep(50);
 				
@@ -49,7 +57,7 @@ void *rdlockThread(void *arg)
 		if (--readers == 0){
 			rc = pthread_mutex_unlock(&wlock);
 		}
-//		printf("%d\tr\t%d\tdone\n", (int)clock(), me);
+//		printf("%d\tr\t%d\tdone\n", (int)get_cycles(), me);
 
 		
 		rc = pthread_mutex_unlock(&rlock);
@@ -66,20 +74,20 @@ void *wrlockThread(void *arg)
 	
 	while (i-- > 0) {
 		
-//		printf("%d\tw\t%d\tacce\n", (int)clock(), me);
+//		printf("%d\tw\t%d\tacce\n", (int)get_cycles(), me);
 		
 		rc = pthread_mutex_lock(&waccess);
 		rc = pthread_mutex_lock(&wlock);
 		
-		printf("%d\t1\n", (int)clock());
-//		printf("%d\tw\t%d\twrite\n", (int)clock(), me);
+		printf("%llu\t1\n", get_cycles());
+//		printf("%d\tw\t%d\twrite\n", (int)get_cycles(), me);
 		// write for a while
 		usleep(100);
 		
 		rc = pthread_mutex_unlock(&wlock);
 		rc = pthread_mutex_unlock(&waccess);
 		
-//		printf("%d\tw\t%d\tdone\n", (int)clock(), me);
+//		printf("%d\tw\t%d\tdone\n", (int)get_cycles(), me);
 	}
 	return NULL;
 }
