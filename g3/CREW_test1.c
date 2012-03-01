@@ -30,6 +30,8 @@ void *rdlockThread(void *arg)
 //		printf("Reader %d getting read lock\n", me);
 		
 		
+//		printf("%d prepere\n", me);
+		
 		rc = pthread_rwlock_rdlock(&rlock);
 		if (++readers == 1){
 			
@@ -46,6 +48,9 @@ void *rdlockThread(void *arg)
 		if (--readers == 0){
 			rc = pthread_rwlock_unlock(&wlock);
 		}
+		
+		printf("%d end reading\n", me);
+		
 //		printf("Readers decrease -> %d\n", readers);
 		rc = pthread_rwlock_unlock(&rlock);
 				
