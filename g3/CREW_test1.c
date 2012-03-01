@@ -27,33 +27,32 @@ void *rdlockThread(void *arg)
 	int i = NUM_ITER;
 	
 	while(i-- > 0) {
-		printf("Reader %d getting read lock\n", me);
+//		printf("Reader %d getting read lock\n", me);
 		
+		
+//		printf("%d prepere\n", me);
 		
 		rc = pthread_rwlock_rdlock(&rlock);
-		checkResults("pthread_rwlock_rdlock()\n", rc);
-		if (readers++ == 1){
+		if (++readers == 1){
 			
 			rc = pthread_rwlock_rdlock(&wlock);
-			checkResults("pthread_rwlock_rdlock()\n", rc);
 		}			
-		printf("Readers increase -> %d\n", readers);
+//		printf("Readers increase -> %d\n", readers);
 		rc = pthread_rwlock_unlock(&rlock);
-		checkResults("pthread_rwlock_unlock()\n", rc);
 				
 		printf("%d reading\n", me);
 		// read for a while
 		usleep(50);
 				
 		rc = pthread_rwlock_rdlock(&rlock);
-		checkResults("pthread_rwlock_rdlock()\n", rc);		
-		if (readers-- == 0){
+		if (--readers == 0){
 			rc = pthread_rwlock_unlock(&wlock);
-			checkResults("pthread_rwlock_rdlock()\n", rc);
 		}
-		printf("Readers decrease -> %d\n", readers);
+		
+		printf("%d end reading\n", me);
+		
+//		printf("Readers decrease -> %d\n", readers);
 		rc = pthread_rwlock_unlock(&rlock);
-		checkResults("pthread_rwlock_unlock()\n", rc);		
 				
 //		printf("Reader %d unlocked\n", me);
 	}
@@ -67,16 +66,14 @@ void *wrlockThread(void *arg)
 	int i = NUM_ITER;
 	
 	while (i-- > 0) {
-		printf("Writer %d getting write lock\n", me);
+//		printf("Writer %d getting write lock\n", me);
 		rc = pthread_rwlock_wrlock(&wlock);
-		checkResults("pthread_rwlock_wrlock()\n", rc);
 		
 		printf("%d writing\n", me);
 		// write for a while
 		usleep(100);
 		
 		rc = pthread_rwlock_unlock(&wlock);
-		//    checkResults("pthread_rwlock_unlock()\n", rc);
 		//    printf("Writer %d unlocked\n", me);
 	}
 	return NULL;
