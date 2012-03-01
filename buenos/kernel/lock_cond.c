@@ -5,7 +5,7 @@
 
 
 #include "kernel/lock.h"
-#include "kernel/condition.h"
+#include "kernel/lock_cond.h"
 #include "kernel/sleepq.h"
 #include "kernel/interrupt.h"
 
