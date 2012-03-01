@@ -1,11 +1,11 @@
 CC=gcc
 CFLAGS=-pthread 
-TARGET=PThread_rwlock CREW_test1
+TARGET=PThread_rwlock CREW_test1 CREW_test2
 OBJS=$(shell ls *.c)
 all: $(TARGET)
 
 
-$(TARGET): 
+$(TARGET): clean
 # $(OBJS)
 	$(CC) -o $@ $(CFLAGS) $@.c
 
