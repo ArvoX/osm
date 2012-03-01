@@ -1,0 +1,26 @@
+lock_t: bools værdi for om der er låst eller ej, og en spinlock til af sørge
+for at kun en bruger låsen af gangen.
+
+lock_reset sætter låsen til at være åben, initalisere spinlock'en og
+retunere 0, vi kunne ikke finde på nogen måde at der kunne ske en fejl så
+den retunere aldrig en fejlstatus.
+
+I lock_acquire og lock_release bruger vi spinlock'en til at sørge for at vi er
+den enste der prøver at få låsen lige nu og hvis den er låst ligger vi os
+til at sove indtil der bliver åbnet for låsen.
+
+
+cond_t: vi har ikke kunne finde andet brug til denne udover at bruge den til at
+sove på derfor har vi lavet den som en tom struct.
+
+I condition_init har vi ikke noget arbejde at lave da vi har valgt at bruge en
+tom struct som beskrevet ovenfor. Derfor er det eneste som init laver er at
+sætte cond = cond for at undgå at der kommer fejl med ubrugte argumenter. Vi
+er begge enige om at det virker mærkeligt at der ikke skulle være noget at
+bruge cond_t og condition_init til men vi kan samtidigt ikke finde nogen fejl i
+vores implementering og har derfor valgt ikke at gøre mere ved det.
+
+condition_wait ligger kalderen til at sove i en sovekø og låser låsen op.
+
+condition_signal og condition_broadcast kalder bare henholdvis sleepq_wake og
+sleepq_wake_all for at vægge en eller alle der er i kø.
