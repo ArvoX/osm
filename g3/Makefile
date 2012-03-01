@@ -1,6 +1,6 @@
 CC=gcc
 CFLAGS=-g -pedantic -std=c99 -Wall -Wextra 
-TARGET=PThread_rwlock
+TARGET=PThread_rwlock CREW_test1
 OBJS=$(shell ls *.c)
 all: $(TARGET)
 

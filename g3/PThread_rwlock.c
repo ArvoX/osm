@@ -6,7 +6,7 @@
 #include <string.h>
 
 #define NUM_THREADS 10
-#define NUM_ITER 20
+#define NUM_ITER 10
 
 // error function, checking if val is 0, expecting it to be errno otherwise.
 void checkResults(char* msg, int val) {
@@ -26,8 +26,9 @@ void *rdlockThread(void *arg)
   int i = NUM_ITER;
 
   while(i-- > 0) {
-    printf("Reader %d getting read lock\n", me);
-    rc = pthread_rwlock_rdlock(&rwlock);
+    printf("Reader %d getting read lock. ", me);
+	  rc = pthread_rwlock_rdlock(&rwlock);
+	  printf("\n");
 //    checkResults("pthread_rwlock_rdlock()\n", rc);
     printf("%d reading\n", me);
     
@@ -36,7 +37,7 @@ void *rdlockThread(void *arg)
     
     rc = pthread_rwlock_unlock(&rwlock);
 //    checkResults("pthread_rwlock_unlock()\n", rc);
-    printf("Reader %d unlocked\n", me);
+//    printf("Reader %d unlocked\n", me);
   }
   return NULL;
 }
@@ -48,8 +49,9 @@ void *wrlockThread(void *arg)
   int i = NUM_ITER;
 
   while (i-- > 0) {
-    printf("Writer %d getting write lock\n", me);
+    printf("Writer %d getting write lock. ", me);
     rc = pthread_rwlock_wrlock(&rwlock);
+	  printf("\n");
 //    checkResults("pthread_rwlock_wrlock()\n", rc);
     
     printf("%d writing\n", me);
@@ -58,7 +60,7 @@ void *wrlockThread(void *arg)
 
     rc = pthread_rwlock_unlock(&rwlock);
 //    checkResults("pthread_rwlock_unlock()\n", rc);
-    printf("Writer %d unlocked\n", me);
+//    printf("Writer %d unlocked\n", me);
   }
   return NULL;
 }
