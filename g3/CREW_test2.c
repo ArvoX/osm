@@ -4,9 +4,10 @@
 #include <unistd.h>
 #include <errno.h>
 #include <string.h>
+#include <time.h>
 
-#define NUM_THREADS 10
-#define NUM_ITER 2
+#define NUM_THREADS 200
+#define NUM_ITER 10
 
 // error function, checking if val is 0, expecting it to be errno otherwise.
 void checkResults(char* msg, int val) {
@@ -27,10 +28,7 @@ void *rdlockThread(void *arg)
 	int i = NUM_ITER;
 	
 	while(i-- > 0) {
-//		printf("Reader %d getting read lock\n", me);
-		
-		
-		printf("%d reading try\n", me);
+//		printf("%d\tr\t%d\tacce\n", (int)clock(), me);
 		
 		rc = pthread_mutex_lock(&waccess);
 		rc = pthread_mutex_lock(&rlock);
@@ -41,8 +39,9 @@ void *rdlockThread(void *arg)
 //		printf("Readers increase -> %d\n", readers);
 		rc = pthread_mutex_unlock(&rlock);
 		rc = pthread_mutex_unlock(&waccess);
-				
-		printf("%d reading --------- readers: %d\n", me, readers);
+		
+		printf("%d\t2\n", (int)clock());
+//		printf("%d\tr\t%d\tread\n", (int)clock(), me);
 		// read for a while
 		usleep(50);
 				
@@ -50,13 +49,11 @@ void *rdlockThread(void *arg)
 		if (--readers == 0){
 			rc = pthread_mutex_unlock(&wlock);
 		}
+//		printf("%d\tr\t%d\tdone\n", (int)clock(), me);
+
 		
-		printf("%d reading end. Readers: %d\n", me, readers);
-		
-//		printf("Readers decrease -> %d\n", readers);
 		rc = pthread_mutex_unlock(&rlock);
 				
-//		printf("Reader %d unlocked\n", me);
 	}
 	return NULL;
 }
@@ -68,22 +65,21 @@ void *wrlockThread(void *arg)
 	int i = NUM_ITER;
 	
 	while (i-- > 0) {
-//		printf("Writer %d getting write lock\n", me);
 		
-		printf("%d writing try\n", me);
+//		printf("%d\tw\t%d\tacce\n", (int)clock(), me);
 		
 		rc = pthread_mutex_lock(&waccess);
 		rc = pthread_mutex_lock(&wlock);
 		
-		printf("%d writing ---------\n", me);
+		printf("%d\t1\n", (int)clock());
+//		printf("%d\tw\t%d\twrite\n", (int)clock(), me);
 		// write for a while
 		usleep(100);
 		
 		rc = pthread_mutex_unlock(&wlock);
 		rc = pthread_mutex_unlock(&waccess);
 		
-		printf("%d writing end\n", me);
-		//    printf("Writer %d unlocked\n", me);
+//		printf("%d\tw\t%d\tdone\n", (int)clock(), me);
 	}
 	return NULL;
 }
@@ -99,8 +95,10 @@ int main(int argc, char **argv)
 		num = atoi(argv[1]);
 	}
 	
-	printf("Main initializing rwlock, will use %d readers and writers\n", 
-		   num);
+	
+	
+//	printf("Main initializing rwlock, will use %d readers and writers\n", 
+//		   num);
 	rc = pthread_mutex_init(&rlock, NULL);
 	checkResults("pthread_rwlock_init()\n", rc);
 	rc = pthread_mutex_init(&wlock, NULL);
@@ -131,7 +129,7 @@ int main(int argc, char **argv)
 	rc = pthread_mutex_destroy(&waccess);
 	checkResults("pthread_rwlock_destroy()\n", rc);
 	
-	printf("Main completed\n");
+//	printf("Main completed\n");
 	return 0;
 }
 

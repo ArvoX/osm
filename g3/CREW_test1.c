@@ -27,20 +27,18 @@ void *rdlockThread(void *arg)
 	int i = NUM_ITER;
 	
 	while(i-- > 0) {
-//		printf("Reader %d getting read lock\n", me);
-		
-		
+//		printf("Reader %d getting read lock\n", me);		
 //		printf("%d prepere\n", me);
 		
 		rc = pthread_rwlock_rdlock(&rlock);
 		if (++readers == 1){
-			
 			rc = pthread_rwlock_rdlock(&wlock);
-		}			
+		}
+		
 //		printf("Readers increase -> %d\n", readers);
 		rc = pthread_rwlock_unlock(&rlock);
 				
-		printf("%d reading\n", me);
+		printf("r%d\treading\n", me);
 		// read for a while
 		usleep(50);
 				
