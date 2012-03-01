@@ -5,6 +5,8 @@
 
 
 #include "kernel/lock.h"
+#include "kernel/interrupt.h"
+#include "kernel/sleepq.h"
 
 
 /** Initialize an already allocated lock_t structure.*/
