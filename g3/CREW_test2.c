@@ -17,8 +17,9 @@ void checkResults(char* msg, int val) {
 }
 
 // the read-write lock
-pthread_rwlock_t rcountlock, wlock;
+pthread_rwlock_t rcountlock, wlock, access;
 int readers = 0;
+int writerwating = 0;
 
 void *rdlockThread(void *arg)
 {
@@ -28,18 +29,19 @@ void *rdlockThread(void *arg)
 	
 	while(i-- > 0) {
 //		printf("Reader %d getting read lock\n", me);
-		
-		
 //		printf("%d prepere\n", me);
 		
+		rc = pthread_rwlock_rdlock(&access);		
 		rc = pthread_rwlock_rdlock(&rcountlock);
 		if (++readers == 1){
 			
 			rc = pthread_rwlock_rdlock(&wlock);
-		}			
+		}
+		
 //		printf("Readers increase -> %d\n", readers);
-		rc = pthread_rwlock_unlock(&rcountlock);
-				
+		rc = pthread_rwlock_unlock(&rcountlock);	
+		rc = pthread_rwlock_unlock(&access);
+		
 		printf("%d reading\n", me);
 		// read for a while
 		usleep(50);
@@ -67,7 +69,10 @@ void *wrcountlockThread(void *arg)
 	
 	while (i-- > 0) {
 //		printf("Writer %d getting write lock\n", me);
-		rc = pthread_rwlock_wrcountlock(&wlock);
+		
+		rc = pthread_rwlock_rdlock(&access);
+		rc = pthread_rwlock_wrcountlock(&wlock);	
+		rc = pthread_rwlock_unlock(&access);
 		
 		printf("%d writing\n", me);
 		// write for a while
@@ -96,6 +101,8 @@ int main(int argc, char **argv)
 	checkResults("pthread_rwlock_init()\n", rc);
 	rc = pthread_rwlock_init(&wlock, NULL);
 	checkResults("pthread_rwlock_init()\n", rc);
+	rc = pthread_rwlock_init(&access, NULL);
+	checkResults("pthread_rwlock_init()\n", rc);
 	
 	reader = malloc(2*num*sizeof(pthread_t));
 	if (!reader) checkResults("malloc readers\n", errno);
@@ -117,6 +124,7 @@ int main(int argc, char **argv)
 	
 	rc = pthread_rwlock_destroy(&rcountlock);
 	rc = pthread_rwlock_destroy(&wlock);
+	rc = pthread_rwlock_destroy(&access);
 	checkResults("pthread_rwlock_destroy()\n", rc);
 	
 	printf("Main completed\n");
