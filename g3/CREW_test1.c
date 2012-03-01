@@ -5,8 +5,8 @@
 #include <errno.h>
 #include <string.h>
 
-#define NUM_THREADS 10
-#define NUM_ITER 2
+#define NUM_THREADS 200
+#define NUM_ITER 10
 
 // error function, checking if val is 0, expecting it to be errno otherwise.
 void checkResults(char* msg, int val) {
@@ -37,8 +37,8 @@ void *rdlockThread(void *arg)
 		
 //		printf("Readers increase -> %d\n", readers);
 		rc = pthread_rwlock_unlock(&rlock);
-				
-		printf("r%d\treading\n", me);
+		
+		printf("%d\t2\n", (int)clock());
 		// read for a while
 		usleep(50);
 				
@@ -47,7 +47,7 @@ void *rdlockThread(void *arg)
 			rc = pthread_rwlock_unlock(&wlock);
 		}
 		
-		printf("%d end reading\n", me);
+//		printf("%d end reading\n", me);
 		
 //		printf("Readers decrease -> %d\n", readers);
 		rc = pthread_rwlock_unlock(&rlock);
@@ -67,7 +67,7 @@ void *wrlockThread(void *arg)
 //		printf("Writer %d getting write lock\n", me);
 		rc = pthread_rwlock_wrlock(&wlock);
 		
-		printf("%d writing\n", me);
+		printf("%d\t1\n", (int)clock());
 		// write for a while
 		usleep(100);
 		
@@ -88,8 +88,8 @@ int main(int argc, char **argv)
 		num = atoi(argv[1]);
 	}
 	
-	printf("Main initializing rwlock, will use %d readers and writers\n", 
-		   num);
+//	printf("Main initializing rwlock, will use %d readers and writers\n", 
+//		   num);
 	rc = pthread_rwlock_init(&rlock, NULL);
 	checkResults("pthread_rwlock_init()\n", rc);
 	rc = pthread_rwlock_init(&wlock, NULL);
@@ -117,7 +117,7 @@ int main(int argc, char **argv)
 	rc = pthread_rwlock_destroy(&wlock);
 	checkResults("pthread_rwlock_destroy()\n", rc);
 	
-	printf("Main completed\n");
+//e	printf("Main completed\n");
 	return 0;
 }
 
