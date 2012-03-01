@@ -25,17 +25,17 @@ void lock_acquire(lock_t *lock){
 	 released. */	
     interrupt_status_t intr_status;	
     intr_status = _interrupt_disable();	
-    spinlock_acquire(lock);
+    spinlock_acquire((spinlock_t) lock);
 	
 	while (lock.locked) {				
 		sleepq_add(lock);		
-		spinlock_release(lock);
+		spinlock_release((spinlock_t)lock);
         thread_switch();
-		spinlock_acquire(lock);
+		spinlock_acquire((spinlock_t)lock);
 	}
 
 	lock->locked = 1;	
-	spinlock_release(lock);
+	spinlock_release((spinlock_t)lock);
     _interrupt_set_state(intr_status);		
 }
 
@@ -45,10 +45,10 @@ void lock_release(lock_t *lock){
 	/* Disable interrups while aquring spinlock*/	
     interrupt_status_t intr_status;
 	intr_status = _interrupt_disable();
-    spinlock_acquire(lock);
+    spinlock_acquire((spinlock_t)lock);
 	/* Unlocking*/
 	lock->locked = 0;	
-	spinlock_release(lock);
+	spinlock_release((spinlock_t)lock);
     _interrupt_set_state(intr_status);
 	
 }
