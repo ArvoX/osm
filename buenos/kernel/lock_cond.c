@@ -8,10 +8,14 @@
 #include "kernel/lock_cond.h"
 #include "kernel/sleepq.h"
 #include "kernel/interrupt.h"
+#include "kernel/thread.h"
 
 
 void condition_init(cond_t *cond){
-	
+	/* For at undgå unused*/
+	cond = cond;
+	/* Vi kan ikke se hvad funktionen skal bruges til*/
+
 }
 
 void condition_wait(cond_t *cond, lock_t *lock){
