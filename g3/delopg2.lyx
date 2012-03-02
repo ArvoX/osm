@@ -1,0 +1,725 @@
+#LyX 2.0 created this file. For more info see http://www.lyx.org/
+\lyxformat 413
+\begin_document
+\begin_header
+\textclass article
+\use_default_options true
+\maintain_unincluded_children false
+\language english
+\language_package default
+\inputencoding auto
+\fontencoding global
+\font_roman default
+\font_sans default
+\font_typewriter default
+\font_default_family default
+\use_non_tex_fonts false
+\font_sc false
+\font_osf false
+\font_sf_scale 100
+\font_tt_scale 100
+
+\graphics default
+\default_output_format default
+\output_sync 0
+\bibtex_command default
+\index_command default
+\paperfontsize default
+\use_hyperref false
+\papersize default
+\use_geometry false
+\use_amsmath 1
+\use_esint 1
+\use_mhchem 1
+\use_mathdots 1
+\cite_engine basic
+\use_bibtopic false
+\use_indices false
+\paperorientation portrait
+\suppress_date false
+\use_refstyle 1
+\index Index
+\shortcut idx
+\color #008000
+\end_index
+\secnumdepth 3
+\tocdepth 3
+\paragraph_separation indent
+\paragraph_indentation default
+\quotes_language english
+\papercolumns 1
+\papersides 1
+\paperpagestyle default
+\tracking_changes false
+\output_changes false
+\html_math_output 0
+\html_css_as_file 0
+\html_be_strict false
+\end_header
+
+\begin_body
+
+\begin_layout Title
+Tredje aflevering
+\begin_inset Newline newline
+\end_inset
+
+OSM
+\end_layout
+
+\begin_layout Author
+Davy Eskildsen og Mads C.
+ Lund
+\end_layout
+
+\begin_layout Section
+Locks and condition variables in Buenos
+\end_layout
+
+\begin_layout Subsection
+Implementation af lås
+\end_layout
+
+\begin_layout Standard
+Vi har definere typen lock_t som et struct indeholdende en boolsk værdi
+ for om der er låst eller ej, og en spinlock til af sørge for, at kun en
+ bruger låsen af gangen.
+\end_layout
+
+\begin_layout Standard
+Dertil funktionerne lock_reset, lock_acquire og lock_release:
+\end_layout
+
+\begin_layout Standard
+lock_reset sætter låsen til at være åben, initalisere spinlock'en og retunere
+ 0, vi kan ikke se hvordan der kunne ske en fejl, så den retunere aldrig
+ en fejlstatus.
+\end_layout
+
+\begin_layout Standard
+I lock_acquire og lock_release bruger vi spinlock'en til at sørge for, at
+ vi er den enste der prøver at få låsen lige nu.
+ Hvis den er låst ligger vi os til at sove indtil der bliver åbnet for låsen.
+\end_layout
+
+\begin_layout Subsection
+Betingelsesvariabler
+\end_layout
+
+\begin_layout Standard
+Vi har ikke kunne finde på, hvad vi skulle bruge typen cond_t udover at
+ bruge den til at sove på.
+ Derfor har vi lavet den som en tom struct.
+\end_layout
+
+\begin_layout Standard
+I condition_init er der ikke noget arbejde at lave, da vi har valgt at bruge
+ en tom struct som beskrevet ovenfor.
+ Derfor er det eneste som init laver er at sætte cond = cond for at undgå
+ at der kommer 
+\begin_inset Quotes eld
+\end_inset
+
+warnings
+\begin_inset Quotes erd
+\end_inset
+
+ med ubrugte argumenter.
+ Vi er begge enige om at det virker mærkeligt hvis der ikke skulle være
+ noget at bruge cond_t og condition_init til, men vi kan samtidigt ikke
+ finde nogen fejl i vores implementering og har derfor valgt ikke at gøre
+ mere ved det.
+\end_layout
+
+\begin_layout Standard
+condition_wait ligger kalderen til at sove i en sovekø og låser låsen op.
+ Denne har vi implementeret med sleepq.
+\end_layout
+
+\begin_layout Standard
+condition_signal og condition_broadcast kalder bare henholdvis sleepq_wake
+ og sleepq_wake_all for at vægge en eller alle der er i kø.
+ 
+\end_layout
+
+\begin_layout Section
+CREW problem
+\end_layout
+
+\begin_layout Subsection
+Implementation af simpel CREW
+\end_layout
+
+\begin_layout Standard
+I filen 
+\begin_inset Formula $\texttt{CREW\_test1.c}$
+\end_inset
+
+ har vi implementeret en simpel implementation af CREW.
+ Vi har fulgt strukturen beskrevet ved beskrevet ved forelæsningen i de
+ medfølgende slides.
+ Til forskel har vi brugt pthread_mutex_t i stedet for semafore, da vi kun
+ har brug for en binær lås.
+\end_layout
+
+\begin_layout Standard
+Hvis en tråd skal skrive til en ressource, R, er den afhænging af at have
+ 
+\begin_inset Formula $\texttt{wlock}$
+\end_inset
+
+, tilsvarende for en læse/skrive-lås som netop sikre, at der ikke er flere
+ som kan tilgå R.
+ 
+\end_layout
+
+\begin_layout Standard
+For at opnå samtidig læseadgang, sørger den første læse-tråd for at låse
+ 
+\begin_inset Formula $\texttt{wlock}$
+\end_inset
+
+.
+ Efterfølgede læse-tråde kan nu tilgå R uden den bliver ændret.
+ Når der ikke er flere i gang med at læse, sørger den sidste tråd for at
+ åbne 
+\begin_inset Formula $\texttt{wlock}$
+\end_inset
+
+ igen.
+ Håndteringen af antallet af læs-tråde håndteres af en fælles tællevariabel
+ 
+\begin_inset Formula $\texttt{readers}$
+\end_inset
+
+.
+ Da denne også er en fælles ressource, er det også nødvendigt at beskytte
+ denne mod samtidig adgang.
+ Dette gøres også med en lås, 
+\begin_inset Formula $\texttt{rcountlock}$
+\end_inset
+
+.
+\end_layout
+
+\begin_layout Standard
+\begin_inset Tabular
+<lyxtabular version="3" rows="1" columns="2">
+<features tabularvalignment="middle">
+<column alignment="left" valignment="top" width="40text%">
+<column alignment="left" valignment="top" width="49text%">
+<row>
+<cell alignment="left" valignment="top" usebox="none">
+\begin_inset Text
+
+\begin_layout Subsubsection*
+Skrivetråd
+\end_layout
+
+\begin_layout Enumerate
+Lås 
+\begin_inset Formula $\texttt{wlock}$
+\end_inset
+
+
+\end_layout
+
+\begin_layout Enumerate
+Foretag skrivning
+\end_layout
+
+\begin_layout Enumerate
+Åben 
+\begin_inset Formula $\texttt{wlock}$
+\end_inset
+
+
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="left" valignment="top" usebox="none">
+\begin_inset Text
+
+\begin_layout Subsubsection*
+Læsetråd
+\end_layout
+
+\begin_layout Enumerate
+Lås 
+\begin_inset Formula $\texttt{rcountlock}$
+\end_inset
+
+
+\end_layout
+
+\begin_layout Enumerate
+Tæl 
+\begin_inset Formula $\texttt{readers}$
+\end_inset
+
+ op
+\end_layout
+
+\begin_layout Enumerate
+Hvis det er den første læser: Lås 
+\begin_inset Formula $\texttt{wlock}$
+\end_inset
+
+
+\end_layout
+
+\begin_layout Enumerate
+Åben 
+\begin_inset Formula $\texttt{rcountlock}$
+\end_inset
+
+
+\end_layout
+
+\begin_layout Enumerate
+Foretag skrivning
+\end_layout
+
+\begin_layout Enumerate
+Lås 
+\begin_inset Formula $\texttt{rcountlock}$
+\end_inset
+
+
+\end_layout
+
+\begin_layout Enumerate
+Tæl 
+\begin_inset Formula $\texttt{readers}$
+\end_inset
+
+ ned
+\end_layout
+
+\begin_layout Enumerate
+Hvis det er den sidste læser: Åben 
+\begin_inset Formula $\texttt{wlock}$
+\end_inset
+
+
+\end_layout
+
+\begin_layout Enumerate
+Åben 
+\begin_inset Formula $\texttt{rcountlock}$
+\end_inset
+
+
+\end_layout
+
+\end_inset
+</cell>
+</row>
+</lyxtabular>
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Subsection
+CREW med prioritering af skrive-tråde
+\end_layout
+
+\begin_layout Standard
+Da den forrige implementation resultere i at skrive-trådene kommer til at
+ sulte følger her en metode så vi imødekommer dette problem.
+\end_layout
+
+\begin_layout Standard
+Vi kan betragte linje 1 for skrivetråden og linje 1-4 for læsetråden som
+ indgange til R.
+ Hvis skriveren kan spærre indgangen for læsere, mens den venter på at kunne
+ låse 
+\begin_inset Formula $\texttt{wlock}$
+\end_inset
+
+ er problemet løst.
+ Dette kan gøre med at skulle have lås for at komme gennem indgangen.
+ 
+\end_layout
+
+\begin_layout Standard
+\begin_inset Tabular
+<lyxtabular version="3" rows="1" columns="2">
+<features tabularvalignment="middle">
+<column alignment="left" valignment="top" width="40text%">
+<column alignment="left" valignment="top" width="49text%">
+<row>
+<cell alignment="left" valignment="top" usebox="none">
+\begin_inset Text
+
+\begin_layout Subsubsection*
+Skrivetråd
+\end_layout
+
+\begin_layout Enumerate
+Lås 
+\begin_inset Formula $\texttt{access}$
+\end_inset
+
+
+\end_layout
+
+\begin_layout Enumerate
+Lås 
+\begin_inset Formula $\texttt{wlock}$
+\end_inset
+
+
+\end_layout
+
+\begin_layout Enumerate
+Åben 
+\begin_inset Formula $\texttt{access}$
+\end_inset
+
+
+\end_layout
+
+\begin_layout Enumerate
+Foretag skrivning
+\end_layout
+
+\begin_layout Enumerate
+Åben 
+\begin_inset Formula $\texttt{wlock}$
+\end_inset
+
+
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="left" valignment="top" usebox="none">
+\begin_inset Text
+
+\begin_layout Subsubsection*
+Læsetråd
+\end_layout
+
+\begin_layout Enumerate
+Lås 
+\begin_inset Formula $\texttt{access}$
+\end_inset
+
+
+\end_layout
+
+\begin_layout Enumerate
+Lås 
+\begin_inset Formula $\texttt{rcountlock}$
+\end_inset
+
+
+\end_layout
+
+\begin_layout Enumerate
+Tæl 
+\begin_inset Formula $\texttt{readers}$
+\end_inset
+
+ op
+\end_layout
+
+\begin_layout Enumerate
+Hvis det er den første læser: Lås 
+\begin_inset Formula $\texttt{wlock}$
+\end_inset
+
+
+\end_layout
+
+\begin_layout Enumerate
+Åben 
+\begin_inset Formula $\texttt{rcountlock}$
+\end_inset
+
+
+\end_layout
+
+\begin_layout Enumerate
+Åben 
+\begin_inset Formula $\texttt{access}$
+\end_inset
+
+
+\end_layout
+
+\begin_layout Enumerate
+.....
+\end_layout
+
+\end_inset
+</cell>
+</row>
+</lyxtabular>
+
+\end_inset
+
+
+\begin_inset Newpage newpage
+\end_inset
+
+
+\end_layout
+
+\begin_layout Section
+Analyse af de forskellige metoder
+\end_layout
+
+\begin_layout Standard
+Vi har testet de forskellige implementationer af CREW ved at kigge på antallet
+ af skrivninger og læsninger over tid.
+ Tiden er målt med antal CPU clock-cykler.
+ Til måling har vi brugt antallet af clock-cykler siden systemstart.
+ Vores måledata baserer sig på 50 kørsler af testprogrammerne med 10 læse-
+ og 10 skrivetråde som hver kører 10 iterationer.
+ Det betyder sammenlagt 20000 læsninger og skrivninger.
+\end_layout
+
+\begin_layout Standard
+Figur 1, 2, 3 og 4 indeholder histogrammer for vores to implementationer
+ af CREW og det udleverede eksempel som bruger rwlock.
+ Histogrammerne er opdelt i intervaller af 
+\begin_inset Formula $2\cdot10^{6}$
+\end_inset
+
+ clock-cykler.
+ Farverne indikere antallet skrivninger (blå) i forhold til læsninger (rød).
+\end_layout
+
+\begin_layout Standard
+I figur 
+\begin_inset CommandInset ref
+LatexCommand ref
+reference "fig:CREW-med-sultning"
+
+\end_inset
+
+ ses det tydeligt, at skriverne bliver sultet og først kommer til efter
+ der ikke er flere læsninger.
+ Samtidig ses det også, at denne implementation medføre at der kan foretages
+ mange flere læsninger på kortere tid end for de to andre.
+ Figur 
+\begin_inset CommandInset ref
+LatexCommand ref
+reference "fig:CREW-med-prioritering"
+
+\end_inset
+
+ giver som forventet en mere fair fordeling.
+ Figur 
+\begin_inset CommandInset ref
+LatexCommand ref
+reference "fig:CREW-med-pthreads"
+
+\end_inset
+
+ viser resultaterne for rwlock-implementationen.
+ Her skal det bemærkes at pthreads-rwlock desuden bruger en prioriteringsfaktor
+ mellem læsning og skrivning, som afhænger af implimentationen.
+ Figur 
+\begin_inset CommandInset ref
+LatexCommand ref
+reference "fig:CREW-med-pthreads"
+
+\end_inset
+
+ viser en køsel på Mac OS mens figur 
+\begin_inset CommandInset ref
+LatexCommand ref
+reference "fig:CREW-med-pthreads-1"
+
+\end_inset
+
+ viser en kørsel på Tuxray.
+ Det bemærkes at figur 
+\begin_inset CommandInset ref
+LatexCommand ref
+reference "fig:CREW-med-pthreads"
+
+\end_inset
+
+ kørere ligesom vores implementation, mens figur 
+\begin_inset CommandInset ref
+LatexCommand ref
+reference "fig:CREW-med-pthreads-1"
+
+\end_inset
+
+udnytter bedre at den kan foretege samtidig læsning.
+\end_layout
+
+\begin_layout Standard
+\begin_inset Float figure
+wide false
+sideways false
+status collapsed
+
+\begin_layout Plain Layout
+\align center
+\begin_inset Graphics
+	filename CREW_test1.png
+	lyxscale 10
+	width 80text%
+
+\end_inset
+
+
+\begin_inset Caption
+
+\begin_layout Plain Layout
+\begin_inset CommandInset label
+LatexCommand label
+name "fig:CREW-med-sultning"
+
+\end_inset
+
+CREW med sultning af skrivere.
+ 
+\begin_inset Newline newline
+\end_inset
+
+Rød: læsninger.
+ Blå: Skrivninger
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\end_inset
+
+
+\begin_inset Float figure
+wide false
+sideways false
+status collapsed
+
+\begin_layout Plain Layout
+\align center
+\begin_inset Graphics
+	filename CREW_test2.png
+	lyxscale 10
+	width 80text%
+
+\end_inset
+
+
+\begin_inset Caption
+
+\begin_layout Plain Layout
+\begin_inset CommandInset label
+LatexCommand label
+name "fig:CREW-med-prioritering"
+
+\end_inset
+
+CREW med prioritering af skrivere.
+\begin_inset Newline newline
+\end_inset
+
+Rød: læsninger.
+ Blå: Skrivninger
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\end_inset
+
+
+\begin_inset Float figure
+wide false
+sideways false
+status open
+
+\begin_layout Plain Layout
+\align center
+\begin_inset Graphics
+	filename PThread_rwlock.png
+	lyxscale 10
+	width 80text%
+
+\end_inset
+
+
+\begin_inset Caption
+
+\begin_layout Plain Layout
+\begin_inset CommandInset label
+LatexCommand label
+name "fig:CREW-med-pthreads"
+
+\end_inset
+
+CREW med pthreads rwlock på Mac OS.
+\begin_inset Newline newline
+\end_inset
+
+Rød: læsninger.
+ Blå: Skrivninger
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\end_inset
+
+
+\begin_inset Float figure
+wide false
+sideways false
+status open
+
+\begin_layout Plain Layout
+\align center
+\begin_inset Graphics
+	filename PThread_rwlock_tuxray.png
+	lyxscale 10
+	width 80text%
+
+\end_inset
+
+
+\begin_inset Caption
+
+\begin_layout Plain Layout
+\begin_inset CommandInset label
+LatexCommand label
+name "fig:CREW-med-pthreads-1"
+
+\end_inset
+
+CREW med pthreads rwlock kørt på tuxray.
+\begin_inset Newline newline
+\end_inset
+
+Rød: læsninger.
+ Blå: Skrivninger
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\end_body
+\end_document
