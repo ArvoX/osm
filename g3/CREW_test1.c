@@ -25,7 +25,7 @@ void checkResults(char* msg, int val) {
 }
 
 // the read-write lock
-pthread_rwlock_t rlock, wlock;
+pthread_mutex_t rlock, wlock;
 int readers = 0;
 
 void *rdlockThread(void *arg)
@@ -38,27 +38,27 @@ void *rdlockThread(void *arg)
 //		printf("Reader %d getting read lock\n", me);		
 //		printf("%d prepere\n", me);
 		
-		rc = pthread_rwlock_rdlock(&rlock);
+		rc = pthread_mutex_lock(&rlock);
 		if (++readers == 1){
-			rc = pthread_rwlock_rdlock(&wlock);
+			rc = pthread_mutex_lock(&wlock);
 		}
 		
 //		printf("Readers increase -> %d\n", readers);
-		rc = pthread_rwlock_unlock(&rlock);
+		rc = pthread_mutex_unlock(&rlock);
 		
 		printf("%llu\t2\n", get_cycles());
 		// read for a while
 		usleep(50);
 				
-		rc = pthread_rwlock_rdlock(&rlock);
+		rc = pthread_mutex_lock(&rlock);
 		if (--readers == 0){
-			rc = pthread_rwlock_unlock(&wlock);
+			rc = pthread_mutex_unlock(&wlock);
 		}
 		
 //		printf("%d end reading\n", me);
 		
 //		printf("Readers decrease -> %d\n", readers);
-		rc = pthread_rwlock_unlock(&rlock);
+		rc = pthread_mutex_unlock(&rlock);
 				
 //		printf("Reader %d unlocked\n", me);
 	}
@@ -73,13 +73,13 @@ void *wrlockThread(void *arg)
 	
 	while (i-- > 0) {
 //		printf("Writer %d getting write lock\n", me);
-		rc = pthread_rwlock_wrlock(&wlock);
+		rc = pthread_mutex_lock(&wlock);
 		
 		printf("%llu\t1\n", get_cycles());
 		// write for a while
 		usleep(100);
 		
-		rc = pthread_rwlock_unlock(&wlock);
+		rc = pthread_mutex_unlock(&wlock);
 		//    printf("Writer %d unlocked\n", me);
 	}
 	return NULL;
@@ -98,9 +98,9 @@ int main(int argc, char **argv)
 	
 //	printf("Main initializing rwlock, will use %d readers and writers\n", 
 //		   num);
-	rc = pthread_rwlock_init(&rlock, NULL);
+	rc = pthread_mutex_init(&rlock, NULL);
 	checkResults("pthread_rwlock_init()\n", rc);
-	rc = pthread_rwlock_init(&wlock, NULL);
+	rc = pthread_mutex_init(&wlock, NULL);
 	checkResults("pthread_rwlock_init()\n", rc);
 	
 	reader = malloc(2*num*sizeof(pthread_t));
@@ -121,8 +121,8 @@ int main(int argc, char **argv)
 		checkResults("pthread_join\n", rc);
 	}
 	
-	rc = pthread_rwlock_destroy(&rlock);
-	rc = pthread_rwlock_destroy(&wlock);
+	rc = pthread_mutex_destroy(&rlock);
+	rc = pthread_mutex_destroy(&wlock);
 	checkResults("pthread_rwlock_destroy()\n", rc);
 	
 //e	printf("Main completed\n");
