@@ -38,7 +38,7 @@ void *rdlockThread(void *arg)
 	  rc = pthread_rwlock_rdlock(&rwlock);
 //	  printf("\n");
 //    checkResults("pthread_rwlock_rdlock()\n", rc);
-    printf("%llu\t1\n", get_cycles());
+    printf("%llu\t2\n", get_cycles());
     
     // read for a while
     usleep(50);
@@ -62,7 +62,7 @@ void *wrlockThread(void *arg)
 //	  printf("\n");
 //    checkResults("pthread_rwlock_wrlock()\n", rc);
     
-    printf("%llu\t2\n", get_cycles());
+    printf("%llu\t1\n", get_cycles());
     // write for a while
     usleep(100);
 
