@@ -38,6 +38,8 @@
 #define BUENOS_PROC_PROCESS
 
 #include "lib/types.h"
+#include "fs/vfs.h"
+
 
 #define USERLAND_STACK_TOP 0x7fffeffc
 #define USER_PROC_LIMIT 4
