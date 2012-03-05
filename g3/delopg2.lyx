@@ -557,14 +557,14 @@ udnytter bedre at den kan foretege samtidig læsning.
 \begin_inset Float figure
 wide false
 sideways false
-status collapsed
+status open
 
 \begin_layout Plain Layout
 \align center
 \begin_inset Graphics
 	filename CREW_test1.png
 	lyxscale 10
-	width 80text%
+	width 90text%
 
 \end_inset
 
@@ -579,11 +579,7 @@ name "fig:CREW-med-sultning"
 \end_inset
 
 CREW med sultning af skrivere.
- 
-\begin_inset Newline newline
-\end_inset
-
-Rød: læsninger.
+ Rød: læsninger.
  Blå: Skrivninger
 \end_layout
 
@@ -598,14 +594,14 @@ Rød: læsninger.
 \begin_inset Float figure
 wide false
 sideways false
-status collapsed
+status open
 
 \begin_layout Plain Layout
 \align center
 \begin_inset Graphics
 	filename CREW_test2.png
 	lyxscale 10
-	width 80text%
+	width 90text%
 
 \end_inset
 
@@ -620,10 +616,7 @@ name "fig:CREW-med-prioritering"
 \end_inset
 
 CREW med prioritering af skrivere.
-\begin_inset Newline newline
-\end_inset
-
-Rød: læsninger.
+ Rød: læsninger.
  Blå: Skrivninger
 \end_layout
 
@@ -645,7 +638,7 @@ status open
 \begin_inset Graphics
 	filename PThread_rwlock.png
 	lyxscale 10
-	width 80text%
+	width 90text%
 
 \end_inset
 
@@ -660,10 +653,7 @@ name "fig:CREW-med-pthreads"
 \end_inset
 
 CREW med pthreads rwlock på Mac OS.
-\begin_inset Newline newline
-\end_inset
-
-Rød: læsninger.
+ Rød: læsninger.
  Blå: Skrivninger
 \end_layout
 
@@ -685,7 +675,7 @@ status open
 \begin_inset Graphics
 	filename PThread_rwlock_tuxray.png
 	lyxscale 10
-	width 80text%
+	width 90text%
 
 \end_inset
 
@@ -700,10 +690,7 @@ name "fig:CREW-med-pthreads-1"
 \end_inset
 
 CREW med pthreads rwlock kørt på tuxray.
-\begin_inset Newline newline
-\end_inset
-
-Rød: læsninger.
+ Rød: læsninger.
  Blå: Skrivninger
 \end_layout
 
