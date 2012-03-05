@@ -43,6 +43,7 @@
 #define USER_PROC_LIMIT 4
 
 #define PROC_EXEC_NAME_MAX 80
+#define PROC_MAX_OPEN_FILES 64
 
 typedef int process_id_t;
 
@@ -52,6 +53,7 @@ typedef enum {
 	PROC_FREE
 } proc_state_t;
 
+
 typedef struct {
 	proc_state_t state;
 	char executable[PROC_EXEC_NAME_MAX];
@@ -59,6 +61,7 @@ typedef struct {
 	process_id_t first_child;
 	process_id_t sibling;
 	int orphan;
+	openfile_t files[PROC_MAX_OPEN_FILES];
 } process_t;
 
 void process_start(uint32_t pid);

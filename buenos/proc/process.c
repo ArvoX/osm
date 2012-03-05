@@ -114,10 +114,20 @@ void process_start(uint32_t pid)
     _interrupt_set_state(intr_status);
 
     file = vfs_open((char *)executable);
-    /* Make sure the file existed and was a valid ELF file */
+ 
+	/* Make sure the file existed and was a valid ELF file */
     KERNEL_ASSERT(file >= 0);
-    KERNEL_ASSERT(elf_parse_header(&elf, file));
-
+    KERNEL_ASSERT(elf_parse_header(&elf, file));	
+	
+	/* Saving the program file in the proces file tabel.
+	   We use spinlock because it is possible the parent is dead 
+	   and this process will be an orphan. */
+	intr_status = _interrupt_disable();
+    spinlock_acquire(&proc_table_slock);
+	proc_table[pid].files[0] = file;	
+    spinlock_release(&proc_table_slock);
+    _interrupt_set_state(intr_status);	
+	
     /* Trivial and naive sanity check for entry point: */
     KERNEL_ASSERT(elf.entry_point >= PAGE_SIZE);
 
@@ -302,6 +312,14 @@ void process_finish(int retval) {
     intr_status = _interrupt_disable();
     spinlock_acquire(&proc_table_slock);
 
+	/* Closing all open files in this process */
+	int i;
+	for (i=0; i<PROC_MAX_OPEN_FILES; i++){
+		if  (proc_table[pid].files[i] > -1){
+			vfs_close(proc_table[pid].files[i]);			
+		}
+	}
+	
     process_id_t child = proc_table[pid].first_child;
     
     if(proc_table[pid].orphan)
@@ -401,7 +419,10 @@ void clear_proc_table_entry(process_id_t pid) {
     proc_table[pid].first_child = -1;
     proc_table[pid].sibling     = -1;
     proc_table[pid].orphan      = 0;
+	
     int i;
     for(i = 0; i < PROC_EXEC_NAME_MAX; i++)
         proc_table[pid].executable[i] = '\0';
+    for(i = 0; i < PROC_MAX_OPEN_FILES; i++)
+        proc_table[pid].files[i] = -1;
 }
