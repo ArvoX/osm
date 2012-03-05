@@ -68,6 +68,7 @@ void syscall_handle(context_t *user_context)
 	 * restored from user_context.
 	 */
 	switch(user_context->cpu_regs[MIPS_REGISTER_A0]) {
+			
 		case SYSCALL_HALT:
 			DEBUG("debugsyscall","t:%d. SYSCALL_HALT\n",thread_get_current_thread());
 			halt_kernel();
@@ -127,6 +128,32 @@ void syscall_handle(context_t *user_context)
 
 			user_context->cpu_regs[MIPS_REGISTER_V0] = length;
 
+			break;
+		}
+		case SYSCALL_OPEN:
+		{
+			char *path = (char*)user_context->cpu_regs[MIPS_REGISTER_A1];
+			break;
+		}
+		case SYSCALL_CLOSE:
+		{
+			int filehandle = (int)user_context->cpu_regs[MIPS_REGISTER_A1];
+			break;
+		}
+		case SYSCALL_CREATE:
+		{
+			char *path = (char*)user_context->cpu_regs[MIPS_REGISTER_A1];
+			int size = (int)user_context->cpu_regs[MIPS_REGISTER_A2];
+			break;
+		}
+		case SYSCALL_DELETE:
+		{
+			int filehandle = (int)user_context->cpu_regs[MIPS_REGISTER_A1];
+			int offset = (int)user_context->cpu_regs[MIPS_REGISTER_A2];
+			break;
+		}
+		case SYSCALL_SEEK:
+		{
 			break;
 		}
 		default: 
