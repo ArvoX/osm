@@ -133,27 +133,33 @@ void syscall_handle(context_t *user_context)
 		case SYSCALL_OPEN:
 		{
 			char *path = (char*)user_context->cpu_regs[MIPS_REGISTER_A1];
+			user_context->cpu_regs[MIPS_REGISTER_V0] = vfs_open(path);
 			break;
 		}
 		case SYSCALL_CLOSE:
 		{
 			int filehandle = (int)user_context->cpu_regs[MIPS_REGISTER_A1];
+			user_context->cpu_regs[MIPS_REGISTER_V0] = vfs_close(filehandle);
 			break;
 		}
 		case SYSCALL_CREATE:
 		{
 			char *path = (char*)user_context->cpu_regs[MIPS_REGISTER_A1];
 			int size = (int)user_context->cpu_regs[MIPS_REGISTER_A2];
+			user_context->cpu_regs[MIPS_REGISTER_V0] = vfs_create(path, size);	
 			break;
 		}
 		case SYSCALL_DELETE:
 		{
-			int filehandle = (int)user_context->cpu_regs[MIPS_REGISTER_A1];
-			int offset = (int)user_context->cpu_regs[MIPS_REGISTER_A2];
+			char *path = (char*)user_context->cpu_regs[MIPS_REGISTER_A1];
+			user_context->cpu_regs[MIPS_REGISTER_V0] = vfs_create(path);
 			break;
 		}
 		case SYSCALL_SEEK:
 		{
+			int filehandle = (int)user_context->cpu_regs[MIPS_REGISTER_A1];
+			int offset = (int)user_context->cpu_regs[MIPS_REGISTER_A2];
+			user_context->cpu_regs[MIPS_REGISTER_V0] = vfs_seek(path, offset);
 			break;
 		}
 		default: 
