@@ -73,7 +73,7 @@ Davy Eskildsen og Mads C.
 \end_layout
 
 \begin_layout Section
-Locks and condition variables in Buenos
+Låse og betingelsesvariabler i Buenos
 \end_layout
 
 \begin_layout Subsection
@@ -143,7 +143,7 @@ condition_signal og condition_broadcast kalder bare henholdvis sleepq_wake
 \end_layout
 
 \begin_layout Section
-CREW problem
+CREW-problemet
 \end_layout
 
 \begin_layout Subsection
@@ -461,10 +461,6 @@ Hvis det er den første læser: Lås
 </row>
 </lyxtabular>
 
-\end_inset
-
-
-\begin_inset Newpage newpage
 \end_inset
 
 
