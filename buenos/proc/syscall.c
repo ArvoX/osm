@@ -98,17 +98,30 @@ void syscall_handle(context_t *user_context)
 			void *buffer = (void*)user_context->cpu_regs[MIPS_REGISTER_A2];
 			int length = (int)user_context->cpu_regs[MIPS_REGISTER_A3];
 
-			KERNEL_ASSERT(fhandle == FILEHANDLE_STDIN);
+			switch(fhandle)
+			{
+				// if stdin: read from tty
+				case FILEHANDLE_STDIN:
+				{
+					gcd_t *gcd;
+					gettty(&gcd);
 
-			gcd_t *gcd;
-			gettty(&gcd);
-
-			length = gcd->read(gcd, buffer, length);
-			// da vi retunere length behover vi saa at saette afsluttende null tegn?
-			//buffer2[len] = '\0';
-
+					length = gcd->read(gcd, buffer, length);
+					// da vi retunere length behover vi saa at saette afsluttende null tegn?
+					//buffer2[len] = '\0';
+					break;
+				}
+				//if stdout or stderr: nothing to read
+				case FILEHANDLE_STDOUT:
+				case FILEHANDLE_STDERR:
+					length = 0;
+					break;
+				//else read file
+				default:
+					length = vfs_read(fhandle, buffer, length);
+					break;
+			}
 			user_context->cpu_regs[MIPS_REGISTER_V0] = length;
-
 			break;
 		}
 		case SYSCALL_WRITE:
@@ -118,17 +131,30 @@ void syscall_handle(context_t *user_context)
 			void *buffer = (void*)user_context->cpu_regs[MIPS_REGISTER_A2];
 			int length = (int)user_context->cpu_regs[MIPS_REGISTER_A3];
 
-			KERNEL_ASSERT(fhandle == FILEHANDLE_STDOUT);
+			switch(fhandle)
+			{
+				//if stdin: nothing written
+				case FILEHANDLE_STDIN:
+					length = 0;
+					break;
+				//if stdout or stderr write to tty
+				case FILEHANDLE_STDOUT:
+				case FILEHANDLE_STDERR:
+				{
+					gcd_t *gcd;
+					gettty(&gcd);
 
-			gcd_t *gcd;
-			gettty(&gcd);
-
-			length = gcd->write(gcd, buffer, length);
-			// da vi retunere length behover vi saa at saette afsluttende null tegn?
-			//buffer2[len] = '\0';
-
+					length = gcd->write(gcd, buffer, length);
+					// da vi retunere length behover vi saa at saette afsluttende null tegn?
+					//buffer2[len] = '\0';
+					break;
+				}
+				//else write to file
+				default:
+					length = vfs_write(fhandle, buffer, length);
+					break;
+			}
 			user_context->cpu_regs[MIPS_REGISTER_V0] = length;
-
 			break;
 		}
 		case SYSCALL_OPEN:
