@@ -100,7 +100,7 @@ typedef struct {
 #define FLATFS_MAX_FILES (FLATFS_BLOCK_SIZE/sizeof(FLATFS_direntry_t))
 
 /* functions */
-fs_t * FLATFS_init(gbd_t *disk);
+fs_t * flatfs_init(gbd_t *disk);
 
 int flatfs_unmount(fs_t *fs);
 int flatfs_open(fs_t *fs, char *filename);
