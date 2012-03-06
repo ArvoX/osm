@@ -38,8 +38,6 @@
 #define BUENOS_PROC_PROCESS
 
 #include "lib/types.h"
-#include "fs/vfs.h"
-
 
 #define USERLAND_STACK_TOP 0x7fffeffc
 #define USER_PROC_LIMIT 4
@@ -63,7 +61,7 @@ typedef struct {
 	process_id_t first_child;
 	process_id_t sibling;
 	int orphan;
-	openfile_t files[PROC_MAX_OPEN_FILES];
+	int files[PROC_MAX_OPEN_FILES];
 } process_t;
 
 void process_start(uint32_t pid);
