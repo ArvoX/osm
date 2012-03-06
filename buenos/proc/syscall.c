@@ -44,6 +44,7 @@
 #include "drivers/device.h"
 #include "drivers/gcd.h"
 #include "drivers/yams.h"
+#include "fs/vfs.h"
 
 void gettty();
 
