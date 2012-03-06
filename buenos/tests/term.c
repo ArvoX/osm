@@ -6,6 +6,7 @@ char* numbers = "0123456789";
 void write(char *buf);
 void writeInt(int i);
 int strlen(char *buf);
+int strcmp(char *s1, char *s2);
 int readline(char *buf, int len);
 
 int main(void)
@@ -17,6 +18,8 @@ int main(void)
         char buf[80];
         if(readline(buf, 80))
         {
+            if(strcmp(buf,"exit") == 0)
+                break;
             int pid = syscall_exec(buf);
             write("Starting ");
             write(buf);
@@ -102,4 +105,15 @@ int readline(char *out, int len)
                 return 0;
         }
     }
+}
+
+int strcmp(char *s1, char *s2)
+{
+    int i;
+    for(i=0; s1[i] != '\0' && s2[i] != '\0'; i++)
+        if(s1[i] < s2i[i])
+            return -1;
+        else if(s1[i] > s2i[i])
+            return 1;
+    return 0;
 }

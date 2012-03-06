@@ -47,7 +47,7 @@
 #define FLATFS_BLOCK_SIZE 512
 
 /* Magic number found on each flatfs filesystem's header block. */
-#define FLATFS_MAGIC 3745
+#define FLATFS_MAGIC 0x00BAB5E2
 
 /* Block numbers for system blocks */
 #define FLATFS_HEADER_BLOCK 0

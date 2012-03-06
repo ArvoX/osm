@@ -118,7 +118,7 @@ void syscall_handle(context_t *user_context)
 					break;
 				//else read file
 				default:
-					length = vfs_read(fhandle, buffer, length);
+					length = vfs_read(fhandle - 3, buffer, length);
 					break;
 			}
 			user_context->cpu_regs[MIPS_REGISTER_V0] = length;
@@ -151,7 +151,7 @@ void syscall_handle(context_t *user_context)
 				}
 				//else write to file
 				default:
-					length = vfs_write(fhandle, buffer, length);
+					length = vfs_write(fhandle - 3, buffer, length);
 					break;
 			}
 			user_context->cpu_regs[MIPS_REGISTER_V0] = length;
@@ -160,13 +160,13 @@ void syscall_handle(context_t *user_context)
 		case SYSCALL_OPEN:
 		{
 			char *path = (char*)user_context->cpu_regs[MIPS_REGISTER_A1];
-			user_context->cpu_regs[MIPS_REGISTER_V0] = vfs_open(path);
+			user_context->cpu_regs[MIPS_REGISTER_V0] = vfs_open(path) + 3;
 			break;
 		}
 		case SYSCALL_CLOSE:
 		{
 			int filehandle = (int)user_context->cpu_regs[MIPS_REGISTER_A1];
-			user_context->cpu_regs[MIPS_REGISTER_V0] = vfs_close(filehandle);
+			user_context->cpu_regs[MIPS_REGISTER_V0] = vfs_close(filehandle - 3);
 			break;
 		}
 		case SYSCALL_CREATE:
@@ -186,7 +186,7 @@ void syscall_handle(context_t *user_context)
 		{
 			int filehandle = (int)user_context->cpu_regs[MIPS_REGISTER_A1];
 			int offset = (int)user_context->cpu_regs[MIPS_REGISTER_A2];
-			user_context->cpu_regs[MIPS_REGISTER_V0] = vfs_seek(filehandle, offset);
+			user_context->cpu_regs[MIPS_REGISTER_V0] = vfs_seek(filehandle - 3, offset);
 			break;
 		}
 		default: 
