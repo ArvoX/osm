@@ -1,5 +1,5 @@
 /*
- * Trivial Filesystem (TFS).
+ * Trivial Filesystem (flatfs).
  *
  * Copyright (C) 2003 Juha Aatrokoski, Timo Lilja,
  *   Leena Salmela, Teemu Takanen, Aleksi Virtanen.
@@ -30,47 +30,47 @@
  * NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- * $Id: tfs.h,v 1.10 2004/02/18 17:24:49 tlilja Exp $
+ * $Id: flatfs.h,v 1.10 2004/02/18 17:24:49 tlilja Exp $
  *
  */
 
-#ifndef FS_TFS_H
-#define FS_TFS_H
+#ifndef FS_FLATFS_H
+#define FS_FLATFS_H
 
 #include "drivers/gbd.h"
 #include "fs/vfs.h"
 #include "lib/libc.h"
 #include "lib/bitmap.h"
 
-/* In TFS block size is 512. This will affect to various other
-   features of TFS e.g. maximum file size. */
-#define TFS_BLOCK_SIZE 512
+/* In flatfs block size is 512. This will affect to various other
+   features of flatfs e.g. maximum file size. */
+#define FLATFS_BLOCK_SIZE 512
 
-/* Magic number found on each tfs filesystem's header block. */
-#define TFS_MAGIC 3745
+/* Magic number found on each flatfs filesystem's header block. */
+#define FLATFS_MAGIC 3745
 
 /* Block numbers for system blocks */
-#define TFS_HEADER_BLOCK 0
-#define TFS_ALLOCATION_BLOCK 1
-#define TFS_DIRECTORY_BLOCK  2
+#define FLATFS_HEADER_BLOCK 0
+#define FLATFS_ALLOCATION_BLOCK 1
+#define FLATFS_DIRECTORY_BLOCK  2
 
 /* Names are limited to 16 characters */
-#define TFS_VOLUMENAME_MAX 16
-#define TFS_FILENAME_MAX 16
+#define FLATFS_VOLUMENAME_MAX 16
+#define FLATFS_FILENAME_MAX 16
 
 /*
    Maximum number of block pointers in one inode. Block pointers
    are of type uint32_t and one pointer "slot" is reserved for
    file size.
 */
-#define TFS_BLOCKS_MAX ((TFS_BLOCK_SIZE/sizeof(uint32_t))-1)
+#define FLATFS_BLOCKS_MAX ((FLATFS_BLOCK_SIZE/sizeof(uint32_t))-1)
 
 /* Maximum file size. 512-byte Inode can store 127 blocks for a file. 
    512*127=65024 */
-#define TFS_MAX_FILESIZE (TFS_BLOCK_SIZE*TFS_BLOCKS_MAX)
+#define FLATFS_MAX_FILESIZE (FLATFS_BLOCK_SIZE*FLATFS_BLOCKS_MAX)
 
 /* File inode block. Inode contains the filesize and a table of blocknumbers
-   allocated for the file. In TFS files can't have more blocks than fits in
+   allocated for the file. In flatfs files can't have more blocks than fits in
    block table of the inode block. 
 
    One 512 byte block can hold 128 32-bit integers. Therefore the table
@@ -83,8 +83,8 @@ typedef struct {
 
     /* block numbers allocated for this file, zero 
        means unused block. */
-    uint32_t block[TFS_BLOCKS_MAX];			   		      
-} tfs_inode_t;
+    uint32_t block[FLATFS_BLOCKS_MAX];			   		      
+} flatfs_inode_t;
 
 
 /* Master directory block entry. If inode is zero, entry is 
@@ -94,22 +94,22 @@ typedef struct {
     uint32_t inode;
 
     /* File name */
-    char     name[TFS_FILENAME_MAX];
-} tfs_direntry_t;
+    char     name[FLATFS_FILENAME_MAX];
+} flatfs_direntry_t;
 
-#define TFS_MAX_FILES (TFS_BLOCK_SIZE/sizeof(tfs_direntry_t))
+#define FLATFS_MAX_FILES (FLATFS_BLOCK_SIZE/sizeof(FLATFS_direntry_t))
 
 /* functions */
-fs_t * tfs_init(gbd_t *disk);
+fs_t * FLATFS_init(gbd_t *disk);
 
-int tfs_unmount(fs_t *fs);
-int tfs_open(fs_t *fs, char *filename);
-int tfs_close(fs_t *fs, int fileid);
-int tfs_create(fs_t *fs, char *filename, int size);
-int tfs_remove(fs_t *fs, char *filename);
-int tfs_read(fs_t *fs, int fileid, void *buffer, int bufsize, int offset);
-int tfs_write(fs_t *fs, int fileid, void *buffer, int datasize, int offset);
-int tfs_getfree(fs_t *fs);
+int flatfs_unmount(fs_t *fs);
+int flatfs_open(fs_t *fs, char *filename);
+int flatfs_close(fs_t *fs, int fileid);
+int flatfs_create(fs_t *fs, char *filename, int size);
+int flatfs_remove(fs_t *fs, char *filename);
+int flatfs_read(fs_t *fs, int fileid, void *buffer, int bufsize, int offset);
+int flatfs_write(fs_t *fs, int fileid, void *buffer, int datasize, int offset);
+int flatfs_getfree(fs_t *fs);
 
 
-#endif    /* FS_TFS_H */
+#endif    /* FS_FLATFS_H */
