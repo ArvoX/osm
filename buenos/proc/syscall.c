@@ -153,14 +153,14 @@ void syscall_handle(context_t *user_context)
 		case SYSCALL_DELETE:
 		{
 			char *path = (char*)user_context->cpu_regs[MIPS_REGISTER_A1];
-			user_context->cpu_regs[MIPS_REGISTER_V0] = vfs_create(path);
+			user_context->cpu_regs[MIPS_REGISTER_V0] = vfs_remove(path);
 			break;
 		}
 		case SYSCALL_SEEK:
 		{
 			int filehandle = (int)user_context->cpu_regs[MIPS_REGISTER_A1];
 			int offset = (int)user_context->cpu_regs[MIPS_REGISTER_A2];
-			user_context->cpu_regs[MIPS_REGISTER_V0] = vfs_seek(path, offset);
+			user_context->cpu_regs[MIPS_REGISTER_V0] = vfs_seek(filehandle, offset);
 			break;
 		}
 		default: 
