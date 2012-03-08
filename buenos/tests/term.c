@@ -22,13 +22,16 @@ int main(void)
                 break;
             else if(strcmp(command, "show") == 0)
                 show(firstArg);
-            int pid = syscall_exec(buf);
-            write("Starting ");
-            write(buf);
-            write(", ");
-            writeInt(pid);
-            write("\n");
-            writeInt(syscall_join(pid));
+            else
+            {
+                int pid = syscall_exec(buf);
+                write("Starting ");
+                write(buf);
+                write(", ");
+                writeInt(pid);
+                write("\n");
+                writeInt(syscall_join(pid));
+            }
         }
         else
             write("input to long\n");
