@@ -1,6 +1,8 @@
 #include "tests/lib.h"
 #include "tests/str.h"
 
+char *numbers = "0123456789";
+
 void write(char *buf)
 {
     int len = strlen(buf);
