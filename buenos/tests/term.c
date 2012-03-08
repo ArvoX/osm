@@ -20,7 +20,7 @@ int main(void)
             nextArg = getFirstArg(&buf[nextArg], secondArg);
             if(strcmp(buf,"exit") == 0)
                 break;
-            else if(strcmp(command, "show") == 0);
+            else if(strcmp(command, "show") == 0)
                 show(firstArg);
             int pid = syscall_exec(buf);
             write("Starting ");
