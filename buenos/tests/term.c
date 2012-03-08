@@ -41,6 +41,11 @@ void write(char *buf)
     syscall_write(stdout, buf, len);
 }
 
+void writeChar(char c)
+{
+    syscall_write(stdout, &c, 1);
+}
+
 void writeInt(int i)
 {
     char c[80];
@@ -89,20 +94,31 @@ int readline(char *out, int len)
         int readed = syscall_read(stdin, buf, bufsize);
         for(i = 0; i < readed; i++)
         {
-            if(buf[i] == 13)
+            switch(buf[i])
             {
-                char c = '\n';
-                syscall_write(stdout, &c, 1);
-                out[outfilled] = '\0';
-                return 1;
+                case '\r':
+                case '\n':
+                    writeChar('\n');
+                    out[outfilled] = '\0';
+                    return 1;
+                case 127:
+                    if(outfilled > 0)
+                    {
+                        writeChar('\b');
+                        writeChar(' ');
+                        writeChar('\b');
+                        outfilled--;
+                    }
+                    break;
+                default:
+                    if(outfilled < bufsize)
+                    {
+                        syscall_write(stdout, &buf[i], 1);
+                        out[outfilled++] = buf[i];
+                    }
+                    else
+                        return 0;
             }
-            else if(outfilled < bufsize)
-            {
-                syscall_write(stdout, &buf[i], 1);
-                out[outfilled++] = buf[i];
-            }
-            else
-                return 0;
         }
     }
 }
@@ -111,9 +127,9 @@ int strcmp(char *s1, char *s2)
 {
     int i;
     for(i=0; s1[i] != '\0' && s2[i] != '\0'; i++)
-        if(s1[i] < s2i[i])
+        if(s1[i] < s2[i])
             return -1;
-        else if(s1[i] > s2i[i])
+        else if(s1[i] > s2[i])
             return 1;
     return 0;
 }

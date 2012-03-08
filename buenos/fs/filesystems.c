@@ -43,7 +43,7 @@
 
 static filesystems_t filesystems[] = {
     {"TFS", &tfs_init},
-    {"FLATFS", &flatfs_init},
+    {"FlatFS", &flatfs_init},
     { NULL, NULL} /* Last entry must be a NULL pair. */ 
 };
 
