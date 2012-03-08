@@ -58,7 +58,7 @@ int getFirstArg(const char *str, char *arg)
         else
             arg[i] = str[i];
     arg[i] = '\0';
-    while(str[i++] == ' ');
+    while(str[++i] == ' ');
 
     return i;
 }

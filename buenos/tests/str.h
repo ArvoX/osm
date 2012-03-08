@@ -1,11 +1,11 @@
 #ifndef STR
 #define STR
 
-void write(char *str);
-void writeChar(char c);
+void write(const char *str);
+void writeChar(const char c);
 void writeInt(int i);
-int strlen(char *str);
-int strcmp(char *str1, char *str2);
-int readline(char *buf, int len);
+int strlen(const char *str);
+int strcmp(const char *str1, const char *str2);
+int readline(char *buf, const int len);
 
 #endif

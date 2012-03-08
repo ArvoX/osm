@@ -1,16 +1,16 @@
 #include "tests/lib.h"
 #include "tests/str.h"
 
-char *numbers = "0123456789";
+const char *numbers = "0123456789";
 
-void write(char *buf)
+void write(const char *buf)
 {
     int len = strlen(buf);
 
     syscall_write(stdout, buf, len);
 }
 
-void writeChar(char c)
+void writeChar(const char c)
 {
     syscall_write(stdout, &c, 1);
 }
@@ -44,7 +44,7 @@ void writeInt(int i)
     syscall_write(stdout, &c[k], 80-k);
 }
 
-int strlen(char *str)
+int strlen(const char *str)
 {
     int i = 0;
     while(str[i] != 0)
@@ -52,7 +52,7 @@ int strlen(char *str)
     return i;
 }
 
-int readline(char *out, int len)
+int readline(char *out, const int len)
 {
     int bufsize = len - 1;
     char buf[bufsize];
@@ -91,7 +91,7 @@ int readline(char *out, int len)
     }
 }
 
-int strcmp(char *s1, char *s2)
+int strcmp(const char *s1, const char *s2)
 {
     int i;
     for(i=0; s1[i] != '\0' && s2[i] != '\0'; i++)
