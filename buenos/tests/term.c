@@ -2,6 +2,9 @@
 #include "tests/str.h"
 
 void show(const char *filename);
+void touch(const char *filename);
+void rm(const char *filename);
+void cp(const char *from, const char *to);
 int getFirstArg(const char *str, char *arg);
 
 int main(void)
@@ -22,6 +25,12 @@ int main(void)
                 break;
             else if(strcmp(command, "show") == 0)
                 show(firstArg);
+            else if(strcmp(command, "touch") == 0)
+                touch(firstArg);
+            else if(strcmp(command, "rm") == 0)
+                rm(firstArg);
+            else if(strcmp(command, "cp") == 0)
+                cp(firstArg, secondArg);
             else
             {
                 int pid = syscall_exec(buf);
@@ -47,6 +56,28 @@ void show(const char *filename)
     while((readed = syscall_read(fid, buf, 80)) > 0)
         syscall_write(stdout, buf, readed);
     syscall_close(fid);
+}
+
+void touch(const char *filename)
+{
+    syscall_create(filename, 2048);
+}
+
+void rm(const char *filename)
+{
+    syscall_delete(filename);
+}
+
+void cp(const char *from, const char *to)
+{
+    char *buf[80];
+    int in = syscall_open(from);
+    int out = syscall_open(to);
+    int readed;
+    while((readed = syscall_read(in, buf, 80)) > 0)
+        syscall_write(out, buf, readed);
+    syscall_close(in);
+    syscall_close(out);
 }
 
 int getFirstArg(const char *str, char *arg)
