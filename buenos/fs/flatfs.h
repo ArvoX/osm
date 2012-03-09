@@ -46,6 +46,8 @@
    features of flatfs e.g. maximum file size. */
 #define FLATFS_BLOCK_SIZE 512
 
+#define FLATFS_MAX_DIRECT_BLOCK 7
+
 /* Magic number found on each flatfs filesystem's header block. */
 #define FLATFS_MAGIC 0x00BAB5E2
 
@@ -59,11 +61,9 @@
 #define FLATFS_FILENAME_MAX 16
 
 /*
-   Maximum number of block pointers in one inode. Block pointers
-   are of type uint32_t and one pointer "slot" is reserved for
-   file size.
+   Maximum number of block pointers in one pointer node. 
 */
-#define FLATFS_BLOCKS_MAX ((FLATFS_BLOCK_SIZE/sizeof(uint32_t))-1)
+#define FLATFS_BLOCKS_MAX ((FLATFS_BLOCK_SIZE/sizeof(uint32_t)))
 
 /* Maximum file size. 512-byte Inode can store 127 blocks for a file. 
    512*127=65024 */
@@ -83,8 +83,21 @@ typedef struct {
 
     /* block numbers allocated for this file, zero 
        means unused block. */
-    uint32_t block[FLATFS_BLOCKS_MAX];			   		      
+    uint32_t block[FLATFS_MAX_DIRECT_BLOCK];
+
+	uint32_t inderect_sigle;
+	uint32_t inderect_double;
+
 } flatfs_inode_t;
+
+
+
+typedef struct {
+
+    uint32_t block[FLATFS_BLOCKS_MAX];
+
+} flatfs_pointernode_t;
+
 
 
 /* Master directory block entry. If inode is zero, entry is 
