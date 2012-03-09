@@ -1,12 +1,11 @@
-
 #include "tests/lib.h"
+#include "tests/str.h"
 
-char* numbers = "0123456789";
-
-void write(char *buf);
-void writeInt(int i);
-int strlen(char *buf);
-int readline(char *buf, int len);
+void show(const char *filename);
+void touch(const char *filename);
+void rm(const char *filename);
+void cp(const char *from, const char *to);
+int getFirstArg(const char *str, char *arg);
 
 int main(void)
 {
@@ -17,13 +16,31 @@ int main(void)
         char buf[80];
         if(readline(buf, 80))
         {
-            int pid = syscall_exec(buf);
-            write("Starting ");
-            write(buf);
-            write(", ");
-            writeInt(pid);
-            write("\n");
-            writeInt(syscall_join(pid));
+            int nextArg;
+            char command[80], firstArg[80], secondArg[80];
+            nextArg = getFirstArg(buf, command);
+            nextArg = getFirstArg(&buf[nextArg], firstArg);
+            nextArg = getFirstArg(&buf[nextArg], secondArg);
+            if(strcmp(buf,"exit") == 0)
+                break;
+            else if(strcmp(command, "show") == 0)
+                show(firstArg);
+            else if(strcmp(command, "touch") == 0)
+                touch(firstArg);
+            else if(strcmp(command, "rm") == 0)
+                rm(firstArg);
+            else if(strcmp(command, "cp") == 0)
+                cp(firstArg, secondArg);
+            else
+            {
+                int pid = syscall_exec(buf);
+                write("Starting ");
+                write(buf);
+                write(", ");
+                writeInt(pid);
+                write("\n");
+                writeInt(syscall_join(pid));
+            }
         }
         else
             write("input to long\n");
@@ -31,75 +48,51 @@ int main(void)
     return 0;
 }
 
-void write(char *buf)
+void show(const char *filename)
 {
-    int len = strlen(buf);
-
-    syscall_write(stdout, buf, len);
+    char *buf[80];
+    int fid = syscall_open(filename);
+    int readed;
+    while((readed = syscall_read(fid, buf, 80)) > 0)
+        syscall_write(stdout, buf, readed);
+    syscall_close(fid);
 }
 
-void writeInt(int i)
+void touch(const char *filename)
 {
-    char c[80];
-    if(i < 0)
-    {
-        c[0] = '-';
-        syscall_write(stdout, &c, 1);
-        i = -i;
-    }
-    else if(i == 0)
-    {
-        syscall_write(stdout, &numbers[0], 1);
-    }
-    int k = 80;
-    while(i > 0)
-    {
-        int j = i % 10;
-        i = i / 10;
-        if(k > 0)
-            c[--k] = numbers[j];
+    syscall_create(filename, 2048);
+}
+
+void rm(const char *filename)
+{
+    syscall_delete(filename);
+}
+
+void cp(const char *from, const char *to)
+{
+    char *buf[80];
+    int in = syscall_open(from);
+    int out = syscall_open(to);
+    int readed;
+    while((readed = syscall_read(in, buf, 80)) > 0)
+        syscall_write(out, buf, readed);
+    syscall_close(in);
+    syscall_close(out);
+}
+
+int getFirstArg(const char *str, char *arg)
+{
+    int i;
+    int q = 0;
+    for(i = 0; str[i] != '\0'; i++)
+        if(str[i] == '"')
+            q = !q;
+        else if(!q && str[i] == ' ')
+            break;
         else
-        {
-            write("number to big\n");
-            return;
-        }
+            arg[i] = str[i];
+    arg[i] = '\0';
+    while(str[++i] == ' ');
 
-    }
-    syscall_write(stdout, &c[k], 80-k);
-}
-
-int strlen(char *str)
-{
-    int i = 0;
-    while(str[i] != 0)
-        i++;
     return i;
-}
-
-int readline(char *out, int len)
-{
-    int bufsize = len - 1;
-    char buf[bufsize];
-    int i, outfilled = 0;
-    while(1)
-    {
-        int readed = syscall_read(stdin, buf, bufsize);
-        for(i = 0; i < readed; i++)
-        {
-            if(buf[i] == 13)
-            {
-                char c = '\n';
-                syscall_write(stdout, &c, 1);
-                out[outfilled] = '\0';
-                return 1;
-            }
-            else if(outfilled < bufsize)
-            {
-                syscall_write(stdout, &buf[i], 1);
-                out[outfilled++] = buf[i];
-            }
-            else
-                return 0;
-        }
-    }
 }

@@ -15,7 +15,7 @@ cd ..
 
 rm $DISK
 $TOOL create $DISK $SIZE $NAME
-find tests -type f -executable | while read f; do
+find tests -type f \( -executable -or -name '*.txt' \) | while read f; do
 $TOOL write $DISK $f `basename $f`; done
 
 if [ "$1" == "-p" ]
