@@ -76,6 +76,9 @@ typedef struct {
 } flatfs_t;
 
 
+uint32_t flatfs_getBlockPointer(flatfs_t *flatfs, int b1);
+
+
 /** 
  * Initialize trivial filesystem. Allocates 1 page of memory dynamically for
  * filesystem data structure, flatfs data structure and buffers needed.
@@ -820,7 +823,11 @@ int flatfs_getfree(fs_t *fs)
     return (flatfs->totalblocks - allocated)*FLATFS_BLOCK_SIZE;
 }
 
-uint32_t flatfs_getBlockPointer(flatfs_t *flatfs, int b){
+uint32_t flatfs_getBlockPointer(flatfs_t *flatfs, int b1){
+	
+	gbd_request_t req;
+    int r;
+	
 	
 	if (b1 < FLATFS_MAX_DIRECT_BLOCK){
 		/* The block is located in a direct index */
@@ -855,7 +862,7 @@ uint32_t flatfs_getBlockPointer(flatfs_t *flatfs, int b){
 		    semaphore_V(flatfs->lock);
 		    return VFS_ERROR;
 		}
-		req.block = latfs->buffer_bat->block[block_index];
+		req.block = flatfs->buffer_bat->block[block_index];
 		req.buf   = ADDR_KERNEL_TO_PHYS((uint32_t)flatfs->buffer_bat);
 		req.sem   = NULL;		
 		r = flatfs->disk->read_block(flatfs->disk, &req);
