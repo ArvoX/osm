@@ -1,0 +1,168 @@
+#LyX 2.0 created this file. For more info see http://www.lyx.org/
+\lyxformat 413
+\begin_document
+\begin_header
+\textclass article
+\use_default_options true
+\maintain_unincluded_children false
+\language english
+\language_package default
+\inputencoding auto
+\fontencoding global
+\font_roman default
+\font_sans default
+\font_typewriter default
+\font_default_family default
+\use_non_tex_fonts false
+\font_sc false
+\font_osf false
+\font_sf_scale 100
+\font_tt_scale 100
+
+\graphics default
+\default_output_format default
+\output_sync 0
+\bibtex_command default
+\index_command default
+\paperfontsize default
+\use_hyperref false
+\papersize default
+\use_geometry false
+\use_amsmath 1
+\use_esint 1
+\use_mhchem 1
+\use_mathdots 1
+\cite_engine basic
+\use_bibtopic false
+\use_indices false
+\paperorientation portrait
+\suppress_date false
+\use_refstyle 1
+\index Index
+\shortcut idx
+\color #008000
+\end_index
+\secnumdepth 3
+\tocdepth 3
+\paragraph_separation indent
+\paragraph_indentation default
+\quotes_language english
+\papercolumns 1
+\papersides 1
+\paperpagestyle default
+\tracking_changes false
+\output_changes false
+\html_math_output 0
+\html_css_as_file 0
+\html_be_strict false
+\end_header
+
+\begin_body
+
+\begin_layout Section
+FlatFS
+\end_layout
+
+\begin_layout Standard
+I denne opgave har vi implementeret filsystemet FlatFS som kan ses som en
+ udvidelse af det allerede implementeret TFS.
+ Hvor TFS baserer sig på en inode med pointere til filens datablokke, giver
+ FlatFS mulighed for enkelt og dobbelt indirekte pointere som pejer på en
+ blok indeholdende flere pointere.
+\end_layout
+
+\begin_layout Standard
+Dette medfører forøgelse af den maksimale filstørrelse.
+ FlatFS indeholder 7 direkte pointere til datablokke
+\end_layout
+
+\begin_layout Standard
+\begin_inset Formula 
+\[
+n_{direcPointers}=7.
+\]
+
+\end_inset
+
+Hver indirekte pointer pejer på en blok indeholdende pointere.
+ Antallet er 
+\end_layout
+
+\begin_layout Standard
+\begin_inset Formula 
+\[
+n_{pointers}=\frac{size_{block}}{size_{ref}}.
+\]
+
+\end_inset
+
+hvor 
+\begin_inset Formula $size_{bock}$
+\end_inset
+
+ er blokstørrelsen og 
+\begin_inset Formula $size_{ref}$
+\end_inset
+
+ er størrelsen på en reference.
+ Vi kan nu beregne filstørrelsen 
+\begin_inset Formula 
+\[
+size_{file}=size_{block}\left(n_{direcPointers}+n_{pointers}+n_{pointers}^{2}\right).
+\]
+
+\end_inset
+
+Hvis vi antager at blokstørrelsen er 512 byte og referencerne er 4 byte
+ så er
+\begin_inset Formula 
+\[
+n_{pointers}=\frac{512}{4}=128
+\]
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+\begin_inset Formula 
+\begin{eqnarray*}
+size_{file} & = & 512\mbox{ byte}\left(7+128+128^{2}\right)\\
+ & = & 5457728\mbox{ byte}\\
+ & \approx & 8\mbox{ MB}
+\end{eqnarray*}
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Section
+Implementation af flatfs
+\end_layout
+
+\begin_layout Subsection
+Allokering af blokke
+\end_layout
+
+\begin_layout Standard
+Når da FlatFS understøtter dynamisk blokallokering lader vi 
+\begin_inset Formula $\texttt{write}$
+\end_inset
+
+ bruge allorkerinsblokken til at allokere blokke mens der skrives.
+ For at undgå at skulle hente allokeringsblokken flere gange gemmer vi den
+ i 
+\begin_inset Formula $\texttt{flatfs\_bat}$
+\end_inset
+
+ og bruger i stedet 
+\begin_inset Formula $\texttt{flatfs\_md}$
+\end_inset
+
+ som temporer buffer til læsninger fra disken.
+\end_layout
+
+\end_body
+\end_document
