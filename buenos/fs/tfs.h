@@ -111,5 +111,7 @@ int tfs_read(fs_t *fs, int fileid, void *buffer, int bufsize, int offset);
 int tfs_write(fs_t *fs, int fileid, void *buffer, int datasize, int offset);
 int tfs_getfree(fs_t *fs);
 
+int tfs_listFiles(fs_t *fs, char *buffer, int bufffeSize);
+
 
 #endif    /* FS_TFS_H */

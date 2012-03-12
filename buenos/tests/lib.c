@@ -183,3 +183,8 @@ int syscall_delete(const char *filename)
 {
     return (int)_syscall(SYSCALL_DELETE, (uint32_t)filename, 0, 0);
 }
+
+int syscall_listfiles(const char *volumename, char *buffer, int length)
+{
+    return (int)_syscall(SYSCALL_LISTFILES, (uint32_t)volumename, (uint32_t)buffer, (uint32_t)length);
+}

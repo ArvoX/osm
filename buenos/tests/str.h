@@ -2,6 +2,7 @@
 #define STR
 
 void write(const char *str);
+void writeLine(const char *str);
 void writeChar(const char c);
 void writeInt(int i);
 int strlen(const char *str);

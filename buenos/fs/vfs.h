@@ -134,6 +134,8 @@ typedef struct fs_struct{
 
        Returns the number of free bytes, negative values are errors. */
     int (*getfree)(struct fs_struct *fs);
+
+    int (*listFiles)(struct fs_struct *fs, char *buffer, int size);
 } fs_t;
 
 
@@ -155,4 +157,5 @@ int vfs_create(char *pathname, int size);
 int vfs_remove(char *pathname);
 int vfs_getfree(char *filesystem);
 
+int vfs_listFiles(char *pathname, char *buffer, int bufferSize);
 #endif

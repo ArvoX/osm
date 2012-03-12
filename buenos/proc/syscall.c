@@ -189,6 +189,14 @@ void syscall_handle(context_t *user_context)
 			user_context->cpu_regs[MIPS_REGISTER_V0] = vfs_seek(filehandle - 3, offset);
 			break;
 		}
+		case SYSCALL_LISTFILES:
+		{
+			char *volumeName = (char*)user_context->cpu_regs[MIPS_REGISTER_A1];
+			char *buffer = (char*)user_context->cpu_regs[MIPS_REGISTER_A2];
+			int bufferSize = (int)user_context->cpu_regs[MIPS_REGISTER_A3];
+			user_context->cpu_regs[MIPS_REGISTER_V0] = vfs_listFiles(volumeName, buffer, bufferSize);
+			break;
+		}
 		default: 
 			DEBUG("debugsyscall","syscall no: %d\n",user_context->cpu_regs[MIPS_REGISTER_A0]);
 			KERNEL_PANIC("Unhandled system call\n");

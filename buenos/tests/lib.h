@@ -67,5 +67,5 @@ int syscall_delete(const char *filename);
 int syscall_fork(void (*func)(int), int arg);
 void *syscall_memlimit(void *heap_end);
 
-
+int syscall_listfiles(const char *volumename, char *buffer, int bufferSize);
 #endif /* BUENOS_USERLAND_LIB_H */

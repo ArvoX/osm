@@ -10,6 +10,12 @@ void write(const char *buf)
     syscall_write(stdout, buf, len);
 }
 
+void writeLine(const char *buf)
+{
+    write(buf);
+    writeChar('\n');
+}
+
 void writeChar(const char c)
 {
     syscall_write(stdout, &c, 1);
