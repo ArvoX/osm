@@ -844,13 +844,13 @@ uint32_t flatfs_getBlockPointer(flatfs_t *flatfs, uint32_t b1){
 		    semaphore_V(flatfs->lock);
 		    return VFS_ERROR;
 		}
-		return ((flatfs_pointernode_t) (flatfs->buffer_bat))->block[b1 - FLATFS_MAX_DIRECT_BLOCK];
+		return ((flatfs_pointernode_t*) (flatfs->buffer_bat))->block[b1 - FLATFS_MAX_DIRECT_BLOCK];
 		
 	} else {
 		/* The block is located in a double inderect index block */
 		int i = b1 - FLATFS_MAX_DIRECT_BLOCK - FLATFS_BLOCKS_MAX;
-		int block_index =  i / FLATFS_BLOCK_MAX;
-		int index = i % FLATFS_BLOCK_MAX;
+		int block_index =  i / FLATFS_BLOCKS_MAX;
+		int index = i % FLATFS_BLOCKS_MAX;
 		
 		
 		req.block = flatfs->buffer_inode->inderect_double;
@@ -862,7 +862,7 @@ uint32_t flatfs_getBlockPointer(flatfs_t *flatfs, uint32_t b1){
 		    semaphore_V(flatfs->lock);
 		    return VFS_ERROR;
 		}
-		req.block = ((flatfs_pointernode_t) flatfs->buffer_bat)->block[block_index];
+		req.block = ((flatfs_pointernode_t*) flatfs->buffer_bat)->block[block_index];
 		req.buf   = ADDR_KERNEL_TO_PHYS((uint32_t)flatfs->buffer_bat);
 		req.sem   = NULL;		
 		r = flatfs->disk->read_block(flatfs->disk, &req);
@@ -871,7 +871,7 @@ uint32_t flatfs_getBlockPointer(flatfs_t *flatfs, uint32_t b1){
 		    semaphore_V(flatfs->lock);
 		    return VFS_ERROR;
 		}		
-		return ((flatfs_pointernode_t) flatfs->buffer_bat)->block[index];
+		return ((flatfs_pointernode_t*) flatfs->buffer_bat)->block[index];
 	}
 	
 	
