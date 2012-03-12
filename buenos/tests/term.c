@@ -5,6 +5,7 @@ void show(const char *filename);
 void touch(const char *filename);
 void rm(const char *filename);
 void cp(const char *from, const char *to);
+void ls(const char *volumename);
 int getFirstArg(const char *str, char *arg);
 
 int main(void)
@@ -19,8 +20,8 @@ int main(void)
             int nextArg;
             char command[80], firstArg[80], secondArg[80];
             nextArg = getFirstArg(buf, command);
-            nextArg = getFirstArg(&buf[nextArg], firstArg);
-            nextArg = getFirstArg(&buf[nextArg], secondArg);
+            nextArg += getFirstArg(&buf[nextArg], firstArg);
+            nextArg += getFirstArg(&buf[nextArg], secondArg);
             if(strcmp(buf,"exit") == 0)
                 break;
             else if(strcmp(command, "show") == 0)
@@ -31,6 +32,8 @@ int main(void)
                 rm(firstArg);
             else if(strcmp(command, "cp") == 0)
                 cp(firstArg, secondArg);
+            else if(strcmp(command, "ls") == 0)
+                ls(firstArg);
             else
             {
                 int pid = syscall_exec(buf);
@@ -78,6 +81,15 @@ void cp(const char *from, const char *to)
         syscall_write(out, buf, readed);
     syscall_close(in);
     syscall_close(out);
+}
+
+void ls(const char *volumename)
+{
+    char buffer[512];
+    syscall_listfiles(volumename, buffer, 512);
+    int l;
+    for(l = strlen(buffer); l > 0; buffer)
+        writeLine(buffer);
 }
 
 int getFirstArg(const char *str, char *arg)
