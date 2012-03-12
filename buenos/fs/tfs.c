@@ -52,23 +52,23 @@
 
 
 /* Data structure used internally by TFS filesystem. This data structure 
-   is used by tfs-functions. it is initialized during tfs_init(). Also
-   memory for the buffers is reserved _dynamically_ during init.
-
-   Buffers are used when reading/writing system or data blocks from/to 
-   disk.
-*/
+ is used by tfs-functions. it is initialized during tfs_init(). Also
+ memory for the buffers is reserved _dynamically_ during init.
+ 
+ Buffers are used when reading/writing system or data blocks from/to 
+ disk.
+ */
 typedef struct {
     /* Total number of blocks of the disk */ 
     uint32_t       totalblocks;
-
+	
     /* Pointer to gbd device performing tfs */
     gbd_t          *disk;
-
+	
     /* lock for mutual exclusion of fs-operations (we support only
-       one operation at a time in any case) */
+	 one operation at a time in any case) */
     semaphore_t    *lock;
-
+	
     /* Buffers for read/write operations on disk. */       
     tfs_inode_t    *buffer_inode;   /* buffer for inode blocks */
     bitmap_t       *buffer_bat;     /* buffer for allocation block */
@@ -96,26 +96,26 @@ fs_t * tfs_init(gbd_t *disk)
     tfs_t *tfs;
     int r;
     semaphore_t *sem;
-
+	
     if(disk->block_size(disk) != TFS_BLOCK_SIZE)
-	return NULL;
-
+		return NULL;
+	
     /* check semaphore availability before memory allocation */
     sem = semaphore_create(1);
     if (sem == NULL) {
-	kprintf("tfs_init: could not create a new semaphore.\n");
-	return NULL;
+		kprintf("tfs_init: could not create a new semaphore.\n");
+		return NULL;
     }
-
+	
     addr = pagepool_get_phys_page();
     if(addr == 0) {
         semaphore_destroy(sem);
-	kprintf("tfs_init: could not allocate memory.\n");
-	return NULL;
+		kprintf("tfs_init: could not allocate memory.\n");
+		return NULL;
     }
     addr = ADDR_PHYS_TO_KERNEL(addr);      /* transform to vm address */
-
-
+	
+	
     /* Assert that one page is enough */
     KERNEL_ASSERT(PAGE_SIZE >= (3*TFS_BLOCK_SIZE+sizeof(tfs_t)+sizeof(fs_t)));
     
@@ -126,40 +126,40 @@ fs_t * tfs_init(gbd_t *disk)
     r = disk->read_block(disk, &req);
     if(r == 0) {
         semaphore_destroy(sem);
-	pagepool_free_phys_page(ADDR_KERNEL_TO_PHYS(addr));
-	kprintf("tfs_init: Error during disk read. Initialization failed.\n");
-	return NULL; 
+		pagepool_free_phys_page(ADDR_KERNEL_TO_PHYS(addr));
+		kprintf("tfs_init: Error during disk read. Initialization failed.\n");
+		return NULL; 
     }
-
+	
     if(((uint32_t *)addr)[0] != TFS_MAGIC) {
         semaphore_destroy(sem);
-	pagepool_free_phys_page(ADDR_KERNEL_TO_PHYS(addr));
-	return NULL;
+		pagepool_free_phys_page(ADDR_KERNEL_TO_PHYS(addr));
+		return NULL;
     }
-
+	
     /* Copy volume name from header block. */
     stringcopy(name, (char *)(addr+4), TFS_VOLUMENAME_MAX);
-
+	
     /* fs_t, tfs_t and all buffers in tfs_t fit in one page, so obtain
-       addresses for each structure and buffer inside the allocated
-       memory page. */
+	 addresses for each structure and buffer inside the allocated
+	 memory page. */
     fs  = (fs_t *)addr;
     tfs = (tfs_t *)(addr + sizeof(fs_t));
     tfs->buffer_inode = (tfs_inode_t *)((uint32_t)tfs + sizeof(tfs_t));
     tfs->buffer_bat  = (bitmap_t *)((uint32_t)tfs->buffer_inode + 
-				    TFS_BLOCK_SIZE);
+									TFS_BLOCK_SIZE);
     tfs->buffer_md   = (tfs_direntry_t *)((uint32_t)tfs->buffer_bat + 
-					TFS_BLOCK_SIZE);
-
+										  TFS_BLOCK_SIZE);
+	
     tfs->totalblocks = MIN(disk->total_blocks(disk), 8*TFS_BLOCK_SIZE);
     tfs->disk        = disk;
-
+	
     /* save the semaphore to the tfs_t */
     tfs->lock = sem;
-
+	
     fs->internal = (void *)tfs;
     stringcopy(fs->volume_name, name, VFS_NAME_LENGTH);
-
+	
     fs->unmount = tfs_unmount;
     fs->open    = tfs_open;
     fs->close   = tfs_close;
@@ -168,7 +168,7 @@ fs_t * tfs_init(gbd_t *disk)
     fs->read    = tfs_read;
     fs->write   = tfs_write;
     fs->getfree  = tfs_getfree;
-
+	
     return fs;
 }
 
@@ -186,12 +186,12 @@ fs_t * tfs_init(gbd_t *disk)
 int tfs_unmount(fs_t *fs) 
 {
     tfs_t *tfs;
-
+	
     tfs = (tfs_t *)fs->internal;
-
+	
     semaphore_P(tfs->lock); /* The semaphore should be free at this
-      point, we get it just in case something has gone wrong. */
-
+							 point, we get it just in case something has gone wrong. */
+	
     /* free semaphore and allocated memory */
     semaphore_destroy(tfs->lock);
     pagepool_free_phys_page(ADDR_KERNEL_TO_PHYS((uint32_t)fs));
@@ -216,9 +216,9 @@ int tfs_open(fs_t *fs, char *filename)
     gbd_request_t req;
     uint32_t i;
     int r;
-
+	
     tfs = (tfs_t *)fs->internal;
-
+	
     semaphore_P(tfs->lock);
     
     req.block     = TFS_DIRECTORY_BLOCK;
@@ -226,16 +226,16 @@ int tfs_open(fs_t *fs, char *filename)
     req.sem       = NULL;
     r = tfs->disk->read_block(tfs->disk,&req);
     if(r == 0) {
-	/* An error occured during read. */
-	semaphore_V(tfs->lock);
-	return VFS_ERROR;
+		/* An error occured during read. */
+		semaphore_V(tfs->lock);
+		return VFS_ERROR;
     }
-
+	
     for(i=0;i < TFS_MAX_FILES;i++) {
-	if(stringcmp(tfs->buffer_md[i].name, filename) == 0) {
-	    semaphore_V(tfs->lock);
-	    return tfs->buffer_md[i].inode;
-	}
+		if(stringcmp(tfs->buffer_md[i].name, filename) == 0) {
+			semaphore_V(tfs->lock);
+			return tfs->buffer_md[i].inode;
+		}
     }
     
     semaphore_V(tfs->lock);
@@ -256,7 +256,7 @@ int tfs_close(fs_t *fs, int fileid)
 {
     fs = fs;
     fileid = fileid;
-
+	
     return VFS_OK;    
 }
 
@@ -282,129 +282,129 @@ int tfs_create(fs_t *fs, char *filename, int size)
     uint32_t numblocks = (size + TFS_BLOCK_SIZE - 1)/TFS_BLOCK_SIZE; 
     int index = -1;
     int r;
-
+	
     semaphore_P(tfs->lock);
-
+	
     if(numblocks > (TFS_BLOCK_SIZE / 4 - 1)) {
-	semaphore_V(tfs->lock);
-	return VFS_ERROR;
+		semaphore_V(tfs->lock);
+		return VFS_ERROR;
     }
     
     /* Read directory block. Check that file doesn't allready exist and
-       there is space left for the file in directory block. */
+	 there is space left for the file in directory block. */
     req.block = TFS_DIRECTORY_BLOCK;
     req.buf = ADDR_KERNEL_TO_PHYS((uint32_t)tfs->buffer_md);
     req.sem = NULL;
     r = tfs->disk->read_block(tfs->disk, &req);
     if(r == 0) {
-	/* An error occured. */
-	semaphore_V(tfs->lock);
-	return VFS_ERROR;
+		/* An error occured. */
+		semaphore_V(tfs->lock);
+		return VFS_ERROR;
     }
-
+	
     for(i=0;i<TFS_MAX_FILES;i++) {
-	if(stringcmp(tfs->buffer_md[i].name, filename) == 0) {
-	    semaphore_V(tfs->lock);
-	    return VFS_ERROR;
-	}
-
-	if(tfs->buffer_md[i].inode == 0) {
-	    /* found free slot from directory */
-	    index = i;
-	}
+		if(stringcmp(tfs->buffer_md[i].name, filename) == 0) {
+			semaphore_V(tfs->lock);
+			return VFS_ERROR;
+		}
+		
+		if(tfs->buffer_md[i].inode == 0) {
+			/* found free slot from directory */
+			index = i;
+		}
     }
-
+	
     if(index == -1) {
-	/* there was no space in directory, because index is not set */
-	semaphore_V(tfs->lock);
-	return VFS_ERROR;
+		/* there was no space in directory, because index is not set */
+		semaphore_V(tfs->lock);
+		return VFS_ERROR;
     }
-
+	
     stringcopy(tfs->buffer_md[index].name,filename, TFS_FILENAME_MAX);
-
+	
     /* Read allocation block and... */
     req.block = TFS_ALLOCATION_BLOCK;
     req.buf = ADDR_KERNEL_TO_PHYS((uint32_t)tfs->buffer_bat);
     req.sem = NULL;
     r = tfs->disk->read_block(tfs->disk, &req);
     if(r==0) {
-	/* An error occured. */
-	semaphore_V(tfs->lock);
-	return VFS_ERROR;
+		/* An error occured. */
+		semaphore_V(tfs->lock);
+		return VFS_ERROR;
     }
-
-
+	
+	
     /* ...find space for inode... */
     tfs->buffer_md[index].inode = bitmap_findnset(tfs->buffer_bat,
-						  tfs->totalblocks);
+												  tfs->totalblocks);
     if((int)tfs->buffer_md[index].inode == -1) {
-	semaphore_V(tfs->lock);
-	return VFS_ERROR;
+		semaphore_V(tfs->lock);
+		return VFS_ERROR;
     }
-
+	
     /* ...and the rest of the blocks. Mark found block numbers in
-       inode.*/
+	 inode.*/
     tfs->buffer_inode->filesize = size;
     for(i=0; i<numblocks; i++) {
-	tfs->buffer_inode->block[i] = bitmap_findnset(tfs->buffer_bat,
-						      tfs->totalblocks);
-	if((int)tfs->buffer_inode->block[i] == -1) {
-	    /* Disk full. No free block found. */
-	    semaphore_V(tfs->lock);
-	    return VFS_ERROR;
-	}
+		tfs->buffer_inode->block[i] = bitmap_findnset(tfs->buffer_bat,
+													  tfs->totalblocks);
+		if((int)tfs->buffer_inode->block[i] == -1) {
+			/* Disk full. No free block found. */
+			semaphore_V(tfs->lock);
+			return VFS_ERROR;
+		}
     }
     
     /* Mark rest of the blocks in inode as unused. */
     while(i < (TFS_BLOCK_SIZE / 4 - 1))
-	tfs->buffer_inode->block[i++] = 0;
-
+		tfs->buffer_inode->block[i++] = 0;
+	
     req.block = TFS_ALLOCATION_BLOCK;
     req.buf   = ADDR_KERNEL_TO_PHYS((uint32_t)tfs->buffer_bat);
     req.sem   = NULL;
     r = tfs->disk->write_block(tfs->disk, &req);
     if(r==0) {
-	/* An error occured. */
-	semaphore_V(tfs->lock);
-	return VFS_ERROR;
+		/* An error occured. */
+		semaphore_V(tfs->lock);
+		return VFS_ERROR;
     }
-
+	
     req.block = TFS_DIRECTORY_BLOCK;
     req.buf   = ADDR_KERNEL_TO_PHYS((uint32_t)tfs->buffer_md);
     req.sem   = NULL;
     r = tfs->disk->write_block(tfs->disk, &req);
     if(r==0) {
-	/* An error occured. */
-	semaphore_V(tfs->lock);
-	return VFS_ERROR;
+		/* An error occured. */
+		semaphore_V(tfs->lock);
+		return VFS_ERROR;
     }
-
+	
     req.block = tfs->buffer_md[index].inode;
     req.buf   = ADDR_KERNEL_TO_PHYS((uint32_t)tfs->buffer_inode);
     req.sem   = NULL;
     r = tfs->disk->write_block(tfs->disk, &req);
     if(r==0) {
-	/* An error occured. */
-	semaphore_V(tfs->lock);
-	return VFS_ERROR;
+		/* An error occured. */
+		semaphore_V(tfs->lock);
+		return VFS_ERROR;
     }
-
+	
     /* Write zeros to the reserved blocks. Buffer for allocation block
-       is no longer needed, so lets use it as zero buffer. */ 
+	 is no longer needed, so lets use it as zero buffer. */ 
     memoryset(tfs->buffer_bat, 0, TFS_BLOCK_SIZE);
     for(i=0;i<numblocks;i++) {
-	req.block = tfs->buffer_inode->block[i];
-	req.buf   = ADDR_KERNEL_TO_PHYS((uint32_t)tfs->buffer_bat);
-	req.sem   = NULL;
-	r = tfs->disk->write_block(tfs->disk, &req);
-	if(r==0) {
-	    /* An error occured. */
-	    semaphore_V(tfs->lock);
-	    return VFS_ERROR;
-	}
-       
+		req.block = tfs->buffer_inode->block[i];
+		req.buf   = ADDR_KERNEL_TO_PHYS((uint32_t)tfs->buffer_bat);
+		req.sem   = NULL;
+		r = tfs->disk->write_block(tfs->disk, &req);
+		if(r==0) {
+			/* An error occured. */
+			semaphore_V(tfs->lock);
+			return VFS_ERROR;
+		}
+		
     }
-
+	
     semaphore_V(tfs->lock);
     return VFS_OK;
 }
@@ -426,61 +426,61 @@ int tfs_remove(fs_t *fs, char *filename)
     uint32_t i;
     int index = -1;
     int r;
-
+	
     semaphore_P(tfs->lock);
-
+	
     /* Find file and inode block number from directory block.
-       If not found return VFS_NOT_FOUND. */
+	 If not found return VFS_NOT_FOUND. */
     req.block = TFS_DIRECTORY_BLOCK;
     req.buf = ADDR_KERNEL_TO_PHYS((uint32_t)tfs->buffer_md);
     req.sem = NULL;
     r = tfs->disk->read_block(tfs->disk, &req);
     if(r == 0) {
-	/* An error occured. */
-	semaphore_V(tfs->lock);
-	return VFS_ERROR;
+		/* An error occured. */
+		semaphore_V(tfs->lock);
+		return VFS_ERROR;
     }
-
+	
     for(i=0;i<TFS_MAX_FILES;i++) {
-	if(stringcmp(tfs->buffer_md[i].name, filename) == 0) {
-	    index = i;
-	    break;
-	}
+		if(stringcmp(tfs->buffer_md[i].name, filename) == 0) {
+			index = i;
+			break;
+		}
     }
     if(index == -1) {
-	semaphore_V(tfs->lock);
-	return VFS_NOT_FOUND;
+		semaphore_V(tfs->lock);
+		return VFS_NOT_FOUND;
     }
-
+	
     /* Read allocation block of the device and inode block of the file.
-       Free reserved blocks (marked in inode) from allocation block. */
+	 Free reserved blocks (marked in inode) from allocation block. */
     req.block = TFS_ALLOCATION_BLOCK;
     req.buf = ADDR_KERNEL_TO_PHYS((uint32_t)tfs->buffer_bat);
     req.sem = NULL;
     r = tfs->disk->read_block(tfs->disk, &req);
     if(r == 0) {
-	/* An error occured. */
-	semaphore_V(tfs->lock);
-	return VFS_ERROR;
+		/* An error occured. */
+		semaphore_V(tfs->lock);
+		return VFS_ERROR;
     }
-
+	
     req.block = tfs->buffer_md[index].inode;
     req.buf = ADDR_KERNEL_TO_PHYS((uint32_t)tfs->buffer_inode);
     req.sem = NULL;
     r = tfs->disk->read_block(tfs->disk, &req);
     if(r == 0) {
-	/* An error occured. */
-	semaphore_V(tfs->lock);
-	return VFS_ERROR;
+		/* An error occured. */
+		semaphore_V(tfs->lock);
+		return VFS_ERROR;
     }
-
-
+	
+	
     bitmap_set(tfs->buffer_bat,tfs->buffer_md[index].inode,0);
     i=0;
     while(tfs->buffer_inode->block[i] != 0 && 
-	  i < (TFS_BLOCK_SIZE / 4 - 1)) {
-	bitmap_set(tfs->buffer_bat,tfs->buffer_inode->block[i],0);
-	i++;
+		  i < (TFS_BLOCK_SIZE / 4 - 1)) {
+		bitmap_set(tfs->buffer_bat,tfs->buffer_inode->block[i],0);
+		i++;
     }
     
     /* Free directory entry. */ 
@@ -492,21 +492,21 @@ int tfs_remove(fs_t *fs, char *filename)
     req.sem   = NULL;
     r = tfs->disk->write_block(tfs->disk, &req);
     if(r == 0) {
-	/* An error occured. */
-	semaphore_V(tfs->lock);
-	return VFS_ERROR;
+		/* An error occured. */
+		semaphore_V(tfs->lock);
+		return VFS_ERROR;
     }
-
+	
     req.block = TFS_DIRECTORY_BLOCK;
     req.buf   = ADDR_KERNEL_TO_PHYS((uint32_t)tfs->buffer_md);
     req.sem   = NULL;
     r = tfs->disk->write_block(tfs->disk, &req);
     if(r == 0) {
-	/* An error occured. */
-	semaphore_V(tfs->lock);
-	return VFS_ERROR;
+		/* An error occured. */
+		semaphore_V(tfs->lock);
+		return VFS_ERROR;
     }
-
+	
     semaphore_V(tfs->lock);
     return VFS_OK;
 }
@@ -534,98 +534,98 @@ int tfs_read(fs_t *fs, int fileid, void *buffer, int bufsize, int offset)
     int b1, b2;
     int read=0;
     int r;
-
+	
     semaphore_P(tfs->lock);
-
+	
     /* fileid is blocknum so ensure that we don't read system blocks
-       or outside the disk */
+	 or outside the disk */
     if(fileid < 2 || fileid > (int)tfs->totalblocks) {
-	semaphore_V(tfs->lock);
-	return VFS_ERROR;
+		semaphore_V(tfs->lock);
+		return VFS_ERROR;
     }
-
+	
     req.block = fileid;
     req.buf   = ADDR_KERNEL_TO_PHYS((uint32_t)tfs->buffer_inode);
     req.sem   = NULL;
     r = tfs->disk->read_block(tfs->disk, &req);
     if(r == 0) {
-	/* An error occured. */
-	semaphore_V(tfs->lock);
-	return VFS_ERROR;
+		/* An error occured. */
+		semaphore_V(tfs->lock);
+		return VFS_ERROR;
     }   
-
+	
     /* Check that offset is inside the file */
     if(offset < 0 || offset > (int)tfs->buffer_inode->filesize) {
-	semaphore_V(tfs->lock);
-	return VFS_ERROR;
+		semaphore_V(tfs->lock);
+		return VFS_ERROR;
     }
-
+	
     /* Read at most what is left from the file. */ 
     bufsize = MIN(bufsize,((int)tfs->buffer_inode->filesize) - offset);
-
+	
     if(bufsize==0) {
-	semaphore_V(tfs->lock);
-	return 0;
+		semaphore_V(tfs->lock);
+		return 0;
     }
-
+	
     /* first block to be read from the disk */
     b1 = offset / TFS_BLOCK_SIZE;
     
     /* last block to be read from the disk */
     b2 = (offset+bufsize-1) / TFS_BLOCK_SIZE;
-
+	
     /* Read blocks from b1 to b2. First and last are
-       special cases because whole block might not be written
-       to the buffer. */
+	 special cases because whole block might not be written
+	 to the buffer. */
     req.block = tfs->buffer_inode->block[b1];
     req.buf   = ADDR_KERNEL_TO_PHYS((uint32_t)tfs->buffer_bat);
     req.sem   = NULL;
     r = tfs->disk->read_block(tfs->disk, &req);
     if(r == 0) {
-	/* An error occured. */
-	semaphore_V(tfs->lock);
-	return VFS_ERROR;
+		/* An error occured. */
+		semaphore_V(tfs->lock);
+		return VFS_ERROR;
     }
-
+	
     /* Count the number of the bytes to be read from the block and
-       written to the buffer from the first block. */
+	 written to the buffer from the first block. */
     read = MIN(TFS_BLOCK_SIZE - (offset % TFS_BLOCK_SIZE),bufsize);
     memcopy(read,
-	    buffer,
-	    (const uint32_t *)(((uint32_t)tfs->buffer_bat) + 
-			       (offset % TFS_BLOCK_SIZE)));   
+			buffer,
+			(const uint32_t *)(((uint32_t)tfs->buffer_bat) + 
+							   (offset % TFS_BLOCK_SIZE)));   
     
     buffer = (void *)((uint32_t)buffer + read);
     b1++;
     while(b1 <= b2) {
-	req.block = tfs->buffer_inode->block[b1];
-	req.buf   = ADDR_KERNEL_TO_PHYS((uint32_t)tfs->buffer_bat);
-	req.sem   = NULL;
-	r = tfs->disk->read_block(tfs->disk, &req);
-	if(r == 0) {
-	    /* An error occured. */
-	    semaphore_V(tfs->lock);
-	    return VFS_ERROR;
-	}
-
-	if(b1 == b2) {
-	    /* Last block. Whole block might not be read.*/
-	    memcopy(bufsize - read,
-		    buffer,
-		    (const uint32_t *)tfs->buffer_bat);
-	    read += (bufsize - read);
-	}
-	else {
-	    /* Read whole block */
-	    memcopy(TFS_BLOCK_SIZE,
-		    buffer,
-		    (const uint32_t *)tfs->buffer_bat);
-	    read += TFS_BLOCK_SIZE;
-	    buffer = (void *)((uint32_t)buffer + TFS_BLOCK_SIZE);
-	}
-	b1++;
+		req.block = tfs->buffer_inode->block[b1];
+		req.buf   = ADDR_KERNEL_TO_PHYS((uint32_t)tfs->buffer_bat);
+		req.sem   = NULL;
+		r = tfs->disk->read_block(tfs->disk, &req);
+		if(r == 0) {
+			/* An error occured. */
+			semaphore_V(tfs->lock);
+			return VFS_ERROR;
+		}
+		
+		if(b1 == b2) {
+			/* Last block. Whole block might not be read.*/
+			memcopy(bufsize - read,
+					buffer,
+					(const uint32_t *)tfs->buffer_bat);
+			read += (bufsize - read);
+		}
+		else {
+			/* Read whole block */
+			memcopy(TFS_BLOCK_SIZE,
+					buffer,
+					(const uint32_t *)tfs->buffer_bat);
+			read += TFS_BLOCK_SIZE;
+			buffer = (void *)((uint32_t)buffer + TFS_BLOCK_SIZE);
+		}
+		b1++;
     }
-
+	
     semaphore_V(tfs->lock);
     return read;
 }
@@ -654,128 +654,128 @@ int tfs_write(fs_t *fs, int fileid, void *buffer, int datasize, int offset)
     int b1, b2;
     int written=0;
     int r;
-
+	
     semaphore_P(tfs->lock);
-
+	
     /* fileid is blocknum so ensure that we don't read system blocks
-       or outside the disk */
+	 or outside the disk */
     if(fileid < 2 || fileid > (int)tfs->totalblocks) {
-	semaphore_V(tfs->lock);
-	return VFS_ERROR;
+		semaphore_V(tfs->lock);
+		return VFS_ERROR;
     }
- 
+	
     req.block = fileid;
     req.buf   = ADDR_KERNEL_TO_PHYS((uint32_t)tfs->buffer_inode);
     req.sem   = NULL;
     r = tfs->disk->read_block(tfs->disk, &req);
     if(r == 0) {
-	/* An error occured. */
-	semaphore_V(tfs->lock);
-	return VFS_ERROR;
+		/* An error occured. */
+		semaphore_V(tfs->lock);
+		return VFS_ERROR;
     }
-
+	
     /* check that start position is inside the disk */
     if(offset < 0 || offset > (int)tfs->buffer_inode->filesize) {
-	semaphore_V(tfs->lock);
-	return VFS_ERROR;
+		semaphore_V(tfs->lock);
+		return VFS_ERROR;
     }
-
+	
     /* write at most the number of bytes left in the file */
     datasize = MIN(datasize,(int)tfs->buffer_inode->filesize-offset);
-
+	
     if(datasize==0) {
-	semaphore_V(tfs->lock);
-	return 0;
+		semaphore_V(tfs->lock);
+		return 0;
     }
-
+	
     /* first block to be written into */
     b1 = offset / TFS_BLOCK_SIZE;
     
     /* last block to be written into */
     b2 = (offset+datasize-1) / TFS_BLOCK_SIZE;
-
+	
     /* Write data to blocks from b1 to b2. First and last are special
-       cases because whole block might not be written. Because of possible
-       partial write, first and last block must be read before writing. 
-
-       If we write less than block size or start writing in the middle
-       of the block, read the block firts. Buffer for allocation block
-       is used because it is not needed (for allocation block) in this
-       function. */
+	 cases because whole block might not be written. Because of possible
+	 partial write, first and last block must be read before writing. 
+	 
+	 If we write less than block size or start writing in the middle
+	 of the block, read the block firts. Buffer for allocation block
+	 is used because it is not needed (for allocation block) in this
+	 function. */
     written = MIN(TFS_BLOCK_SIZE - (offset % TFS_BLOCK_SIZE),datasize);
     if(written < TFS_BLOCK_SIZE) {
-	req.block = tfs->buffer_inode->block[b1];
-	req.buf   = ADDR_KERNEL_TO_PHYS((uint32_t)tfs->buffer_bat);
-	req.sem   = NULL;
-	r = tfs->disk->read_block(tfs->disk, &req);
-	if(r == 0) {
-	    /* An error occured. */
-	    semaphore_V(tfs->lock);
-	    return VFS_ERROR;
-	}
+		req.block = tfs->buffer_inode->block[b1];
+		req.buf   = ADDR_KERNEL_TO_PHYS((uint32_t)tfs->buffer_bat);
+		req.sem   = NULL;
+		r = tfs->disk->read_block(tfs->disk, &req);
+		if(r == 0) {
+			/* An error occured. */
+			semaphore_V(tfs->lock);
+			return VFS_ERROR;
+		}
     }
-
+	
     memcopy(written,
-	    (uint32_t *)(((uint32_t)tfs->buffer_bat) + 
-			       (offset % TFS_BLOCK_SIZE)),
-	    buffer);   
+			(uint32_t *)(((uint32_t)tfs->buffer_bat) + 
+						 (offset % TFS_BLOCK_SIZE)),
+			buffer);   
     
     req.block = tfs->buffer_inode->block[b1];
     req.buf   = ADDR_KERNEL_TO_PHYS((uint32_t)tfs->buffer_bat);
     req.sem   = NULL;
     r = tfs->disk->write_block(tfs->disk, &req);
     if(r == 0) {
-	/* An error occured. */
-	semaphore_V(tfs->lock);
-	return VFS_ERROR;
+		/* An error occured. */
+		semaphore_V(tfs->lock);
+		return VFS_ERROR;
     }
-
+	
     buffer = (void *)((uint32_t)buffer + written);
     b1++;
     while(b1 <= b2) {
-
-	if(b1 == b2) {
-	    /* Last block. If partial write, read the block first.
-	       Write anyway always to the beginning of the block */ 
-	    if((datasize - written)  < TFS_BLOCK_SIZE) {
+		
+		if(b1 == b2) {
+			/* Last block. If partial write, read the block first.
+			 Write anyway always to the beginning of the block */ 
+			if((datasize - written)  < TFS_BLOCK_SIZE) {
+				req.block = tfs->buffer_inode->block[b1];
+				req.buf   = ADDR_KERNEL_TO_PHYS((uint32_t)tfs->buffer_bat);
+				req.sem   = NULL;
+				r = tfs->disk->read_block(tfs->disk, &req);
+				if(r == 0) {
+					/* An error occured. */
+					semaphore_V(tfs->lock);
+					return VFS_ERROR;
+				}
+			}
+			
+			memcopy(datasize - written,
+					(uint32_t *)tfs->buffer_bat,
+					buffer);
+			written = datasize;
+		}
+		else {
+			/* Write whole block */
+			memcopy(TFS_BLOCK_SIZE,
+					(uint32_t *)tfs->buffer_bat,
+					buffer);
+			written += TFS_BLOCK_SIZE;
+			buffer = (void *)((uint32_t)buffer + TFS_BLOCK_SIZE);
+		}
+		
 		req.block = tfs->buffer_inode->block[b1];
 		req.buf   = ADDR_KERNEL_TO_PHYS((uint32_t)tfs->buffer_bat);
 		req.sem   = NULL;
-		r = tfs->disk->read_block(tfs->disk, &req);
+		r = tfs->disk->write_block(tfs->disk, &req);
 		if(r == 0) {
-		    /* An error occured. */
-		    semaphore_V(tfs->lock);
-		    return VFS_ERROR;
+			/* An error occured. */
+			semaphore_V(tfs->lock);
+			return VFS_ERROR;
 		}
-	    }
-	    
-	    memcopy(datasize - written,
-		    (uint32_t *)tfs->buffer_bat,
-		    buffer);
-	    written = datasize;
-	}
-	else {
-	    /* Write whole block */
-	    memcopy(TFS_BLOCK_SIZE,
-		    (uint32_t *)tfs->buffer_bat,
-		    buffer);
-	    written += TFS_BLOCK_SIZE;
-	    buffer = (void *)((uint32_t)buffer + TFS_BLOCK_SIZE);
-	}
-
-	req.block = tfs->buffer_inode->block[b1];
-	req.buf   = ADDR_KERNEL_TO_PHYS((uint32_t)tfs->buffer_bat);
-	req.sem   = NULL;
-	r = tfs->disk->write_block(tfs->disk, &req);
-	if(r == 0) {
-	    /* An error occured. */
-	    semaphore_V(tfs->lock);
-	    return VFS_ERROR;
-	}
-
-	b1++;
+		
+		b1++;
     }
-
+	
     semaphore_V(tfs->lock);
     return written;
 }
@@ -796,21 +796,21 @@ int tfs_getfree(fs_t *fs)
     int allocated = 0;
     uint32_t i;
     int r;
-
+	
     semaphore_P(tfs->lock);
-
+	
     req.block = TFS_ALLOCATION_BLOCK;
     req.buf = ADDR_KERNEL_TO_PHYS((uint32_t)tfs->buffer_bat);
     req.sem = NULL;
     r = tfs->disk->read_block(tfs->disk, &req);
     if(r == 0) {
-	/* An error occured. */
-	semaphore_V(tfs->lock);
-	return VFS_ERROR;
+		/* An error occured. */
+		semaphore_V(tfs->lock);
+		return VFS_ERROR;
     }
-
+	
     for(i=0;i<tfs->totalblocks;i++) {
-	allocated += bitmap_get(tfs->buffer_bat,i);
+		allocated += bitmap_get(tfs->buffer_bat,i);
     }
     
     semaphore_V(tfs->lock);

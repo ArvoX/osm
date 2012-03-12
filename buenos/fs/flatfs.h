@@ -79,7 +79,7 @@
 
 typedef struct {
     /* filesize in bytes */
-    uint32_t filesize;
+		filesize;
 
     /* block numbers allocated for this file, zero 
        means unused block. */
