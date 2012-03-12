@@ -172,5 +172,14 @@ Når da FlatFS understøtter dynamisk blokallokering lader vi
  som temporer buffer til læsninger fra disken.
 \end_layout
 
+\begin_layout Section
+Status på implementationen
+\end_layout
+
+\begin_layout Standard
+Vi nåede desværre ikke at få fil-systemet op og køre endnu.
+ Vi har skrevet nogle kommentarer i blandt andet flatf.c.
+\end_layout
+
 \end_body
 \end_document
