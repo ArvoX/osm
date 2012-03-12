@@ -76,7 +76,7 @@ typedef struct {
 } flatfs_t;
 
 
-uint32_t flatfs_getBlockPointer(flatfs_t *flatfs, int b1);
+uint32_t flatfs_getBlockPointer(flatfs_t *flatfs, uint32_t b1);
 
 
 /** 
@@ -823,7 +823,7 @@ int flatfs_getfree(fs_t *fs)
     return (flatfs->totalblocks - allocated)*FLATFS_BLOCK_SIZE;
 }
 
-uint32_t flatfs_getBlockPointer(flatfs_t *flatfs, int b1){
+uint32_t flatfs_getBlockPointer(flatfs_t *flatfs, uint32_t b1){
 	
 	gbd_request_t req;
     int r;
