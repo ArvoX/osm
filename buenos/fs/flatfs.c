@@ -77,7 +77,7 @@ typedef struct {
 
 
 uint32_t flatfs_getBlockPointer(flatfs_t *flatfs, uint32_t b1);
-
+uint32_t flatfs_allocate_pointerblock(flatfs_t *flatfs);
 
 /** 
  * Initialize trivial filesystem. Allocates 1 page of memory dynamically for
@@ -651,7 +651,7 @@ int flatfs_write(fs_t *fs, int fileid, void *buffer, int datasize, int offset)
 {
     flatfs_t *flatfs = (flatfs_t *)fs->internal;
     gbd_request_t req;
-    int b1, b2;
+    int b1, b2, b_file;
     int written=0;
     int r;
 	
@@ -695,27 +695,24 @@ int flatfs_write(fs_t *fs, int fileid, void *buffer, int datasize, int offset)
     }
 	
 	
-	/* write at most the number of bytes left in the file */
-    
-	if (datasize > ((int)flatfs->buffer_inode->filesize-offset)){
-		flatfs->buffer_inode->filesize = (uint32_t) (datasize + offset);
-	}
-		
-		
-	datasize = MIN(datasize,(int)flatfs->buffer_inode->filesize-offset);
-	
     if(datasize==0) {
 		semaphore_V(flatfs->lock);
 		return 0;
     }
 	
+    
 	
     /* first block to be written into */
     b1 = offset / FLATFS_BLOCK_SIZE;
     
     /* last block to be written into */
     b2 = (offset+datasize-1) / FLATFS_BLOCK_SIZE;
-	
+
+    /* number of block allocated in the file */
+    b_file = (filesize) / FLATFS_BLOCK_SIZE
+    
+    
+    
     /* Write data to blocks from b1 to b2. First and last are special
 	 cases because whole block might not be written. Because of possible
 	 partial write, first and last block must be read before writing. 
@@ -756,7 +753,13 @@ int flatfs_write(fs_t *fs, int fileid, void *buffer, int datasize, int offset)
     b1++;
     while(b1 <= b2) {
 		
-		uint32_t block_pointer = flatfs_getBlockPointer(flatfs, b1);
+        if (b2 <= b_file) {
+            /* the data block is already allocated in the file */
+            uint32_t block_pointer = flatfs_getBlockPointer(flatfs, b1,0);
+        } else {            
+            /* the data block is not allocated in the file */
+            uint32_t block_pointer = flatfs_getBlockPointer(flatfs, b1,1);
+        }
 		
 		if(b1 == b2) {
 			/* Last block. If partial write, read the block first.
@@ -841,66 +844,114 @@ int flatfs_getfree(fs_t *fs)
     return (flatfs->totalblocks - allocated)*FLATFS_BLOCK_SIZE;
 }
 /*
- Returns a pointer to the block corresponding to the given block index b1.
+ Using flatfs_md as temporary buffer. 
  
- Using flatfs_md as temporary buffer.
+ @param fs Pointer to fs data structure of the device.
+ @param index to the block in the file
+ @param If != 0 the data block will be allocated. Allocation block must be loaded into the given data structure. Both the allocation block and the inode block must be written to disk later.
  
- If allocate != 0 and the block don't exists flatfs_getBlockPointer allocates a new block and eventually allocates a new pointer block for inderect pointers.
-
- If allocate != 0 the allocation block must be loaded into the file system in flatfs_md and must be written to disk later.
+ @return pointer to block corresponding to the given block index b1.
+ Negative if failed to allocate.
  
  */
 uint32_t flatfs_getBlockPointer(flatfs_t *flatfs, uint32_t b1, int allocate){
 	
 	gbd_request_t req;
-    int r;
-	
+    int r, i, block_index, index;
+	uint32_t returnvalue, pointerblock;
+        
+    
 	
 	if (b1 < FLATFS_MAX_DIRECT_BLOCK){
-		/* The block is located in a direct index */
-		return flatfs->buffer_inode->block[b1];
-		
-	} else if ((b1 - FLATFS_MAX_DIRECT_BLOCK) < FLATFS_BLOCKS_MAX) {
+		/* The block is located in a direct index */	
+        
+        
+        
+	} else if ((b1 - FLATFS_MAX_DIRECT_BLOCK) < FLATFS_BLOCKS_MAX) {        
 		/* The block is located in a single inderect index block */
-		req.block = flatfs->buffer_inode->inderect_sigle;
-		req.buf   = ADDR_KERNEL_TO_PHYS((uint32_t)flatfs->flatfs_md);
-		req.sem   = NULL;		
-		r = flatfs->disk->read_block(flatfs->disk, &req);
-		if(r == 0) {
-		    /* An error occured. */
-		    semaphore_V(flatfs->lock);
-		    return VFS_ERROR;
-		}
-		return ((flatfs_pointernode_t*) (flatfs->flatfs_md))->block[b1 - FLATFS_MAX_DIRECT_BLOCK];
-		
-	} else {
-		/* The block is located in a double inderect index block */
-		int i = b1 - FLATFS_MAX_DIRECT_BLOCK - FLATFS_BLOCKS_MAX;
-		int block_index =  i / FLATFS_BLOCKS_MAX;
-		int index = i % FLATFS_BLOCKS_MAX;
-		
-		req.block = flatfs->buffer_inode->inderect_double;
-		req.buf   = ADDR_KERNEL_TO_PHYS((uint32_t)flatfs->flatfs_md);
-		req.sem   = NULL;		
-		r = flatfs->disk->read_block(flatfs->disk, &req);
-		if(r == 0) {
-		    /* An error occured. */
-		    semaphore_V(flatfs->lock);
-		    return VFS_ERROR;
-		}
-		req.block = ((flatfs_pointernode_t*) flatfs->flatfs_md)->block[block_index];
-		req.buf   = ADDR_KERNEL_TO_PHYS((uint32_t)flatfs->flatfs_md);
-		req.sem   = NULL;		
-		r = flatfs->disk->read_block(flatfs->disk, &req);
-		if(r == 0) {
-		    /* An error occured. */
-		    semaphore_V(flatfs->lock);
-		    return VFS_ERROR;
-		}		
-		return ((flatfs_pointernode_t*) flatfs->flatfs_md)->block[index];
-	}
-	
+        
+        /* Computes the index for the block pointer in the pointer block */
+        i = b1 - FLATFS_MAX_DIRECT_BLOCK;
+        
+        if (allocate && i == 0){
+            /* We have to allocate the pointer node */
+            
+            pointerblock = bitmap_findnset(flatfs->buffer_bat, flatfs->totalblocks);  
+            flatfs->buffer_inode->inderect_sigle = pointerblock;
+            
+            /* allocate the data block */
+            returnvalue = bitmap_findnset(flatfs->buffer_bat, flatfs->totalblocks);
+            
+            /* prepering the pointer node */            
+            ((flatfs_pointernode_t*) (flatfs->flatfs_md))->block[0] = returnvalue; 
+            
+            /* Writing pointer node to the disk */
+            req.block = returnvalue;
+            req.buf   = ADDR_KERNEL_TO_PHYS((uint32_t)flatfs->flatfs_md);
+            req.sem   = NULL;
+            r = flatfs->disk->write_block(flatfs->disk, &req);
+            
+            return returnvalue;
+            
+        } else if (allocate && i > 0){
+            /* The pointer node is allocated but we have to allocate the data block */
+            
+            /* reading the pointer node from the the disk */
+            req.block = flatfs->buffer_inode->inderect_sigle;
+            req.buf   = ADDR_KERNEL_TO_PHYS((uint32_t)flatfs->flatfs_md);
+            req.sem   = NULL;
+            r = flatfs->disk->read_block(flatfs->disk, &req);
+            
+            /* allocate the data block */
+            returnvalue = bitmap_findnset(flatfs->buffer_bat, flatfs->totalblocks);
+            
+            /* prepering the pointer node */            
+            ((flatfs_pointernode_t*) (flatfs->flatfs_md))->block[i] = returnvalue; 
+            
+            /* Writing pointer node to the disk */
+            req.block = returnvalue;
+            req.buf   = ADDR_KERNEL_TO_PHYS((uint32_t)flatfs->flatfs_md);
+            req.sem   = NULL;
+            r = flatfs->disk->write_block(flatfs->disk, &req);
+            
+            return returnvalue;
+            
+        } else {            
+            /* The data block is allocated */
+            
+            /* reading the pointer node from the the disk */
+            req.block = flatfs->buffer_inode->inderect_sigle;
+            req.buf   = ADDR_KERNEL_TO_PHYS((uint32_t)flatfs->flatfs_md);
+            req.sem   = NULL;
+            r = flatfs->disk->read_block(flatfs->disk, &req);
+            
+            return ((flatfs_pointernode_t*) (flatfs->flatfs_md))->block[i];
+            
+        }
+        
+    } else {
+     /*
+      
+      Dette er ikke implementeret. Her skal vi finde datablokken for double inderect.
+      
+      */   
+        return -1;
+    }
 	
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 /** @} */
