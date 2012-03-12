@@ -98,7 +98,6 @@ fs_t * tfs_init(gbd_t *disk)
     semaphore_t *sem;
 	
     if(disk->block_size(disk) != TFS_BLOCK_SIZE)
-<<<<<<< HEAD
         return NULL;
 
     /* check semaphore availability before memory allocation */
@@ -106,27 +105,13 @@ fs_t * tfs_init(gbd_t *disk)
     if (sem == NULL) {
         kprintf("tfs_init: could not create a new semaphore.\n");
         return NULL;
-=======
-		return NULL;
-	
-    /* check semaphore availability before memory allocation */
-    sem = semaphore_create(1);
-    if (sem == NULL) {
-		kprintf("tfs_init: could not create a new semaphore.\n");
-		return NULL;
->>>>>>> 0ff966952be7952e7b0fcb674eeb9f9fe5adf8aa
     }
 	
     addr = pagepool_get_phys_page();
     if(addr == 0) {
         semaphore_destroy(sem);
-<<<<<<< HEAD
         kprintf("tfs_init: could not allocate memory.\n");
         return NULL;
-=======
-		kprintf("tfs_init: could not allocate memory.\n");
-		return NULL;
->>>>>>> 0ff966952be7952e7b0fcb674eeb9f9fe5adf8aa
     }
     addr = ADDR_PHYS_TO_KERNEL(addr);      /* transform to vm address */
 	
@@ -141,26 +126,15 @@ fs_t * tfs_init(gbd_t *disk)
     r = disk->read_block(disk, &req);
     if(r == 0) {
         semaphore_destroy(sem);
-<<<<<<< HEAD
         pagepool_free_phys_page(ADDR_KERNEL_TO_PHYS(addr));
         kprintf("tfs_init: Error during disk read. Initialization failed.\n");
         return NULL; 
-=======
-		pagepool_free_phys_page(ADDR_KERNEL_TO_PHYS(addr));
-		kprintf("tfs_init: Error during disk read. Initialization failed.\n");
-		return NULL; 
->>>>>>> 0ff966952be7952e7b0fcb674eeb9f9fe5adf8aa
     }
 	
     if(((uint32_t *)addr)[0] != TFS_MAGIC) {
         semaphore_destroy(sem);
-<<<<<<< HEAD
         pagepool_free_phys_page(ADDR_KERNEL_TO_PHYS(addr));
         return NULL;
-=======
-		pagepool_free_phys_page(ADDR_KERNEL_TO_PHYS(addr));
-		return NULL;
->>>>>>> 0ff966952be7952e7b0fcb674eeb9f9fe5adf8aa
     }
 	
     /* Copy volume name from header block. */
@@ -173,17 +147,10 @@ fs_t * tfs_init(gbd_t *disk)
     tfs = (tfs_t *)(addr + sizeof(fs_t));
     tfs->buffer_inode = (tfs_inode_t *)((uint32_t)tfs + sizeof(tfs_t));
     tfs->buffer_bat  = (bitmap_t *)((uint32_t)tfs->buffer_inode + 
-<<<<<<< HEAD
                                     TFS_BLOCK_SIZE);
     tfs->buffer_md   = (tfs_direntry_t *)((uint32_t)tfs->buffer_bat + 
                                         TFS_BLOCK_SIZE);
 
-=======
-									TFS_BLOCK_SIZE);
-    tfs->buffer_md   = (tfs_direntry_t *)((uint32_t)tfs->buffer_bat + 
-										  TFS_BLOCK_SIZE);
-	
->>>>>>> 0ff966952be7952e7b0fcb674eeb9f9fe5adf8aa
     tfs->totalblocks = MIN(disk->total_blocks(disk), 8*TFS_BLOCK_SIZE);
     tfs->disk        = disk;
 	
@@ -259,29 +226,16 @@ int tfs_open(fs_t *fs, char *filename)
     req.sem       = NULL;
     r = tfs->disk->read_block(tfs->disk,&req);
     if(r == 0) {
-<<<<<<< HEAD
         /* An error occured during read. */
         semaphore_V(tfs->lock);
         return VFS_ERROR;
-=======
-		/* An error occured during read. */
-		semaphore_V(tfs->lock);
-		return VFS_ERROR;
->>>>>>> 0ff966952be7952e7b0fcb674eeb9f9fe5adf8aa
     }
 	
     for(i=0;i < TFS_MAX_FILES;i++) {
-<<<<<<< HEAD
         if(stringcmp(tfs->buffer_md[i].name, filename) == 0) {
             semaphore_V(tfs->lock);
             return tfs->buffer_md[i].inode;
         }
-=======
-		if(stringcmp(tfs->buffer_md[i].name, filename) == 0) {
-			semaphore_V(tfs->lock);
-			return tfs->buffer_md[i].inode;
-		}
->>>>>>> 0ff966952be7952e7b0fcb674eeb9f9fe5adf8aa
     }
     
     semaphore_V(tfs->lock);
@@ -332,13 +286,8 @@ int tfs_create(fs_t *fs, char *filename, int size)
     semaphore_P(tfs->lock);
 	
     if(numblocks > (TFS_BLOCK_SIZE / 4 - 1)) {
-<<<<<<< HEAD
         semaphore_V(tfs->lock);
         return VFS_ERROR;
-=======
-		semaphore_V(tfs->lock);
-		return VFS_ERROR;
->>>>>>> 0ff966952be7952e7b0fcb674eeb9f9fe5adf8aa
     }
     
     /* Read directory block. Check that file doesn't allready exist and
@@ -348,19 +297,12 @@ int tfs_create(fs_t *fs, char *filename, int size)
     req.sem = NULL;
     r = tfs->disk->read_block(tfs->disk, &req);
     if(r == 0) {
-<<<<<<< HEAD
         /* An error occured. */
         semaphore_V(tfs->lock);
         return VFS_ERROR;
-=======
-		/* An error occured. */
-		semaphore_V(tfs->lock);
-		return VFS_ERROR;
->>>>>>> 0ff966952be7952e7b0fcb674eeb9f9fe5adf8aa
     }
 	
     for(i=0;i<TFS_MAX_FILES;i++) {
-<<<<<<< HEAD
         if(stringcmp(tfs->buffer_md[i].name, filename) == 0) {
             semaphore_V(tfs->lock);
             return VFS_ERROR;
@@ -370,29 +312,12 @@ int tfs_create(fs_t *fs, char *filename, int size)
             /* found free slot from directory */
             index = i;
         }
-=======
-		if(stringcmp(tfs->buffer_md[i].name, filename) == 0) {
-			semaphore_V(tfs->lock);
-			return VFS_ERROR;
-		}
-		
-		if(tfs->buffer_md[i].inode == 0) {
-			/* found free slot from directory */
-			index = i;
-		}
->>>>>>> 0ff966952be7952e7b0fcb674eeb9f9fe5adf8aa
     }
 	
     if(index == -1) {
-<<<<<<< HEAD
         /* there was no space in directory, because index is not set */
         semaphore_V(tfs->lock);
         return VFS_ERROR;
-=======
-		/* there was no space in directory, because index is not set */
-		semaphore_V(tfs->lock);
-		return VFS_ERROR;
->>>>>>> 0ff966952be7952e7b0fcb674eeb9f9fe5adf8aa
     }
 	
     stringcopy(tfs->buffer_md[index].name,filename, TFS_FILENAME_MAX);
@@ -403,38 +328,24 @@ int tfs_create(fs_t *fs, char *filename, int size)
     req.sem = NULL;
     r = tfs->disk->read_block(tfs->disk, &req);
     if(r==0) {
-<<<<<<< HEAD
         /* An error occured. */
         semaphore_V(tfs->lock);
         return VFS_ERROR;
-=======
-		/* An error occured. */
-		semaphore_V(tfs->lock);
-		return VFS_ERROR;
->>>>>>> 0ff966952be7952e7b0fcb674eeb9f9fe5adf8aa
     }
 	
 	
     /* ...find space for inode... */
     tfs->buffer_md[index].inode = bitmap_findnset(tfs->buffer_bat,
-<<<<<<< HEAD
                                                   tfs->totalblocks);
     if((int)tfs->buffer_md[index].inode == -1) {
         semaphore_V(tfs->lock);
         return VFS_ERROR;
-=======
-												  tfs->totalblocks);
-    if((int)tfs->buffer_md[index].inode == -1) {
-		semaphore_V(tfs->lock);
-		return VFS_ERROR;
->>>>>>> 0ff966952be7952e7b0fcb674eeb9f9fe5adf8aa
     }
 	
     /* ...and the rest of the blocks. Mark found block numbers in
 	 inode.*/
     tfs->buffer_inode->filesize = size;
     for(i=0; i<numblocks; i++) {
-<<<<<<< HEAD
         tfs->buffer_inode->block[i] = bitmap_findnset(tfs->buffer_bat,
                                                       tfs->totalblocks);
         if((int)tfs->buffer_inode->block[i] == -1) {
@@ -442,40 +353,20 @@ int tfs_create(fs_t *fs, char *filename, int size)
             semaphore_V(tfs->lock);
             return VFS_ERROR;
         }
-=======
-		tfs->buffer_inode->block[i] = bitmap_findnset(tfs->buffer_bat,
-													  tfs->totalblocks);
-		if((int)tfs->buffer_inode->block[i] == -1) {
-			/* Disk full. No free block found. */
-			semaphore_V(tfs->lock);
-			return VFS_ERROR;
-		}
->>>>>>> 0ff966952be7952e7b0fcb674eeb9f9fe5adf8aa
     }
     
     /* Mark rest of the blocks in inode as unused. */
     while(i < (TFS_BLOCK_SIZE / 4 - 1))
-<<<<<<< HEAD
         tfs->buffer_inode->block[i++] = 0;
 
-=======
-		tfs->buffer_inode->block[i++] = 0;
-	
->>>>>>> 0ff966952be7952e7b0fcb674eeb9f9fe5adf8aa
     req.block = TFS_ALLOCATION_BLOCK;
     req.buf   = ADDR_KERNEL_TO_PHYS((uint32_t)tfs->buffer_bat);
     req.sem   = NULL;
     r = tfs->disk->write_block(tfs->disk, &req);
     if(r==0) {
-<<<<<<< HEAD
         /* An error occured. */
         semaphore_V(tfs->lock);
         return VFS_ERROR;
-=======
-		/* An error occured. */
-		semaphore_V(tfs->lock);
-		return VFS_ERROR;
->>>>>>> 0ff966952be7952e7b0fcb674eeb9f9fe5adf8aa
     }
 	
     req.block = TFS_DIRECTORY_BLOCK;
@@ -483,15 +374,9 @@ int tfs_create(fs_t *fs, char *filename, int size)
     req.sem   = NULL;
     r = tfs->disk->write_block(tfs->disk, &req);
     if(r==0) {
-<<<<<<< HEAD
         /* An error occured. */
         semaphore_V(tfs->lock);
         return VFS_ERROR;
-=======
-		/* An error occured. */
-		semaphore_V(tfs->lock);
-		return VFS_ERROR;
->>>>>>> 0ff966952be7952e7b0fcb674eeb9f9fe5adf8aa
     }
 	
     req.block = tfs->buffer_md[index].inode;
@@ -499,22 +384,15 @@ int tfs_create(fs_t *fs, char *filename, int size)
     req.sem   = NULL;
     r = tfs->disk->write_block(tfs->disk, &req);
     if(r==0) {
-<<<<<<< HEAD
         /* An error occured. */
         semaphore_V(tfs->lock);
         return VFS_ERROR;
-=======
-		/* An error occured. */
-		semaphore_V(tfs->lock);
-		return VFS_ERROR;
->>>>>>> 0ff966952be7952e7b0fcb674eeb9f9fe5adf8aa
     }
 	
     /* Write zeros to the reserved blocks. Buffer for allocation block
 	 is no longer needed, so lets use it as zero buffer. */ 
     memoryset(tfs->buffer_bat, 0, TFS_BLOCK_SIZE);
     for(i=0;i<numblocks;i++) {
-<<<<<<< HEAD
         req.block = tfs->buffer_inode->block[i];
         req.buf   = ADDR_KERNEL_TO_PHYS((uint32_t)tfs->buffer_bat);
         req.sem   = NULL;
@@ -525,18 +403,6 @@ int tfs_create(fs_t *fs, char *filename, int size)
             return VFS_ERROR;
         }
        
-=======
-		req.block = tfs->buffer_inode->block[i];
-		req.buf   = ADDR_KERNEL_TO_PHYS((uint32_t)tfs->buffer_bat);
-		req.sem   = NULL;
-		r = tfs->disk->write_block(tfs->disk, &req);
-		if(r==0) {
-			/* An error occured. */
-			semaphore_V(tfs->lock);
-			return VFS_ERROR;
-		}
-		
->>>>>>> 0ff966952be7952e7b0fcb674eeb9f9fe5adf8aa
     }
 	
     semaphore_V(tfs->lock);
@@ -570,19 +436,12 @@ int tfs_remove(fs_t *fs, char *filename)
     req.sem = NULL;
     r = tfs->disk->read_block(tfs->disk, &req);
     if(r == 0) {
-<<<<<<< HEAD
         /* An error occured. */
         semaphore_V(tfs->lock);
         return VFS_ERROR;
-=======
-		/* An error occured. */
-		semaphore_V(tfs->lock);
-		return VFS_ERROR;
->>>>>>> 0ff966952be7952e7b0fcb674eeb9f9fe5adf8aa
     }
 	
     for(i=0;i<TFS_MAX_FILES;i++) {
-<<<<<<< HEAD
         if(stringcmp(tfs->buffer_md[i].name, filename) == 0) {
             index = i;
             break;
@@ -591,16 +450,6 @@ int tfs_remove(fs_t *fs, char *filename)
     if(index == -1) {
         semaphore_V(tfs->lock);
         return VFS_NOT_FOUND;
-=======
-		if(stringcmp(tfs->buffer_md[i].name, filename) == 0) {
-			index = i;
-			break;
-		}
-    }
-    if(index == -1) {
-		semaphore_V(tfs->lock);
-		return VFS_NOT_FOUND;
->>>>>>> 0ff966952be7952e7b0fcb674eeb9f9fe5adf8aa
     }
 	
     /* Read allocation block of the device and inode block of the file.
@@ -610,15 +459,9 @@ int tfs_remove(fs_t *fs, char *filename)
     req.sem = NULL;
     r = tfs->disk->read_block(tfs->disk, &req);
     if(r == 0) {
-<<<<<<< HEAD
         /* An error occured. */
         semaphore_V(tfs->lock);
         return VFS_ERROR;
-=======
-		/* An error occured. */
-		semaphore_V(tfs->lock);
-		return VFS_ERROR;
->>>>>>> 0ff966952be7952e7b0fcb674eeb9f9fe5adf8aa
     }
 	
     req.block = tfs->buffer_md[index].inode;
@@ -626,30 +469,18 @@ int tfs_remove(fs_t *fs, char *filename)
     req.sem = NULL;
     r = tfs->disk->read_block(tfs->disk, &req);
     if(r == 0) {
-<<<<<<< HEAD
         /* An error occured. */
         semaphore_V(tfs->lock);
         return VFS_ERROR;
-=======
-		/* An error occured. */
-		semaphore_V(tfs->lock);
-		return VFS_ERROR;
->>>>>>> 0ff966952be7952e7b0fcb674eeb9f9fe5adf8aa
     }
 	
 	
     bitmap_set(tfs->buffer_bat,tfs->buffer_md[index].inode,0);
     i=0;
     while(tfs->buffer_inode->block[i] != 0 && 
-<<<<<<< HEAD
           i < (TFS_BLOCK_SIZE / 4 - 1)) {
         bitmap_set(tfs->buffer_bat,tfs->buffer_inode->block[i],0);
         i++;
-=======
-		  i < (TFS_BLOCK_SIZE / 4 - 1)) {
-		bitmap_set(tfs->buffer_bat,tfs->buffer_inode->block[i],0);
-		i++;
->>>>>>> 0ff966952be7952e7b0fcb674eeb9f9fe5adf8aa
     }
     
     /* Free directory entry. */ 
@@ -661,15 +492,9 @@ int tfs_remove(fs_t *fs, char *filename)
     req.sem   = NULL;
     r = tfs->disk->write_block(tfs->disk, &req);
     if(r == 0) {
-<<<<<<< HEAD
         /* An error occured. */
         semaphore_V(tfs->lock);
         return VFS_ERROR;
-=======
-		/* An error occured. */
-		semaphore_V(tfs->lock);
-		return VFS_ERROR;
->>>>>>> 0ff966952be7952e7b0fcb674eeb9f9fe5adf8aa
     }
 	
     req.block = TFS_DIRECTORY_BLOCK;
@@ -677,15 +502,9 @@ int tfs_remove(fs_t *fs, char *filename)
     req.sem   = NULL;
     r = tfs->disk->write_block(tfs->disk, &req);
     if(r == 0) {
-<<<<<<< HEAD
         /* An error occured. */
         semaphore_V(tfs->lock);
         return VFS_ERROR;
-=======
-		/* An error occured. */
-		semaphore_V(tfs->lock);
-		return VFS_ERROR;
->>>>>>> 0ff966952be7952e7b0fcb674eeb9f9fe5adf8aa
     }
 	
     semaphore_V(tfs->lock);
