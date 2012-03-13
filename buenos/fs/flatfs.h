@@ -79,14 +79,14 @@
 
 typedef struct {
     /* filesize in bytes */
-		filesize;
+    uint32_t filesize;
 
     /* block numbers allocated for this file, zero 
        means unused block. */
     uint32_t block[FLATFS_MAX_DIRECT_BLOCK];
 
-	uint32_t inderect_sigle;
-	uint32_t inderect_double;
+    uint32_t inderect_sigle;
+    uint32_t inderect_double;
 
 } flatfs_inode_t;
 

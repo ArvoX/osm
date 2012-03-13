@@ -61,14 +61,14 @@
 typedef struct {
     /* Total number of blocks of the disk */ 
     uint32_t       totalblocks;
-	
+    
     /* Pointer to gbd device performing flatfs */
     gbd_t          *disk;
-	
+    
     /* lock for mutual exclusion of fs-operations (we support only
-	 one operation at a time in any case) */
+     one operation at a time in any case) */
     semaphore_t    *lock;
-	
+    
     /* Buffers for read/write operations on disk. */       
     flatfs_inode_t    *buffer_inode;   /* buffer for inode blocks */
     bitmap_t       *buffer_bat;     /* buffer for allocation block */
@@ -76,7 +76,7 @@ typedef struct {
 } flatfs_t;
 
 
-uint32_t flatfs_getBlockPointer(flatfs_t *flatfs, uint32_t b1);
+uint32_t flatfs_getBlockPointer(flatfs_t *flatfs, uint32_t b1, int allocate);
 uint32_t flatfs_allocate_pointerblock(flatfs_t *flatfs);
 
 /** 
@@ -99,26 +99,26 @@ fs_t * flatfs_init(gbd_t *disk)
     flatfs_t *flatfs;
     int r;
     semaphore_t *sem;
-	
+    
     if(disk->block_size(disk) != FLATFS_BLOCK_SIZE)
-		return NULL;
-	
+        return NULL;
+    
     /* check semaphore availability before memory allocation */
     sem = semaphore_create(1);
     if (sem == NULL) {
-		kprintf("flatfs_init: could not create a new semaphore.\n");
-		return NULL;
+        kprintf("flatfs_init: could not create a new semaphore.\n");
+        return NULL;
     }
-	
+    
     addr = pagepool_get_phys_page();
     if(addr == 0) {
         semaphore_destroy(sem);
-		kprintf("flatfs_init: could not allocate memory.\n");
-		return NULL;
+        kprintf("flatfs_init: could not allocate memory.\n");
+        return NULL;
     }
     addr = ADDR_PHYS_TO_KERNEL(addr);      /* transform to vm address */
-	
-	
+    
+    
     /* Assert that one page is enough */
     KERNEL_ASSERT(PAGE_SIZE >= (3*FLATFS_BLOCK_SIZE+sizeof(flatfs_t)+sizeof(fs_t)));
     
@@ -129,40 +129,40 @@ fs_t * flatfs_init(gbd_t *disk)
     r = disk->read_block(disk, &req);
     if(r == 0) {
         semaphore_destroy(sem);
-		pagepool_free_phys_page(ADDR_KERNEL_TO_PHYS(addr));
-		kprintf("flatfs_init: Error during disk read. Initialization failed.\n");
-		return NULL; 
+        pagepool_free_phys_page(ADDR_KERNEL_TO_PHYS(addr));
+        kprintf("flatfs_init: Error during disk read. Initialization failed.\n");
+        return NULL; 
     }
-	
+    
     if(((uint32_t *)addr)[0] != FLATFS_MAGIC) {
         semaphore_destroy(sem);
-		pagepool_free_phys_page(ADDR_KERNEL_TO_PHYS(addr));
-		return NULL;
+        pagepool_free_phys_page(ADDR_KERNEL_TO_PHYS(addr));
+        return NULL;
     }
-	
+    
     /* Copy volume name from header block. */
     stringcopy(name, (char *)(addr+4), FLATFS_VOLUMENAME_MAX);
-	
+    
     /* fs_t, flatfs_t and all buffers in flatfs_t fit in one page, so obtain
-	 addresses for each structure and buffer inside the allocated
-	 memory page. */
+     addresses for each structure and buffer inside the allocated
+     memory page. */
     fs  = (fs_t *)addr;
     flatfs = (flatfs_t *)(addr + sizeof(fs_t));
     flatfs->buffer_inode = (flatfs_inode_t *)((uint32_t)flatfs + sizeof(flatfs_t));
     flatfs->buffer_bat  = (bitmap_t *)((uint32_t)flatfs->buffer_inode + 
-									   FLATFS_BLOCK_SIZE);
+                                       FLATFS_BLOCK_SIZE);
     flatfs->buffer_md   = (flatfs_direntry_t *)((uint32_t)flatfs->buffer_bat + 
-												FLATFS_BLOCK_SIZE);
-	
+                                                FLATFS_BLOCK_SIZE);
+    
     flatfs->totalblocks = MIN(disk->total_blocks(disk), 8*FLATFS_BLOCK_SIZE);
     flatfs->disk        = disk;
-	
+    
     /* save the semaphore to the flatfs_t */
     flatfs->lock = sem;
-	
+    
     fs->internal = (void *)flatfs;
     stringcopy(fs->volume_name, name, VFS_NAME_LENGTH);
-	
+    
     fs->unmount = flatfs_unmount;
     fs->open    = flatfs_open;
     fs->close   = flatfs_close;
@@ -171,7 +171,7 @@ fs_t * flatfs_init(gbd_t *disk)
     fs->read    = flatfs_read;
     fs->write   = flatfs_write;
     fs->getfree  = flatfs_getfree;
-	
+    
     return fs;
 }
 
@@ -189,12 +189,12 @@ fs_t * flatfs_init(gbd_t *disk)
 int flatfs_unmount(fs_t *fs) 
 {
     flatfs_t *flatfs;
-	
+    
     flatfs = (flatfs_t *)fs->internal;
-	
+    
     semaphore_P(flatfs->lock); /* The semaphore should be free at this
-								point, we get it just in case something has gone wrong. */
-	
+                                point, we get it just in case something has gone wrong. */
+    
     /* free semaphore and allocated memory */
     semaphore_destroy(flatfs->lock);
     pagepool_free_phys_page(ADDR_KERNEL_TO_PHYS((uint32_t)fs));
@@ -219,9 +219,9 @@ int flatfs_open(fs_t *fs, char *filename)
     gbd_request_t req;
     uint32_t i;
     int r;
-	
+    
     flatfs = (flatfs_t *)fs->internal;
-	
+    
     semaphore_P(flatfs->lock);
     
     req.block     = FLATFS_DIRECTORY_BLOCK;
@@ -229,16 +229,16 @@ int flatfs_open(fs_t *fs, char *filename)
     req.sem       = NULL;
     r = flatfs->disk->read_block(flatfs->disk,&req);
     if(r == 0) {
-		/* An error occured during read. */
-		semaphore_V(flatfs->lock);
-		return VFS_ERROR;
+        /* An error occured during read. */
+        semaphore_V(flatfs->lock);
+        return VFS_ERROR;
     }
-	
+    
     for(i=0;i < FLATFS_MAX_FILES;i++) {
-		if(stringcmp(flatfs->buffer_md[i].name, filename) == 0) {
-			semaphore_V(flatfs->lock);
-			return flatfs->buffer_md[i].inode;
-		}
+        if(stringcmp(flatfs->buffer_md[i].name, filename) == 0) {
+            semaphore_V(flatfs->lock);
+            return flatfs->buffer_md[i].inode;
+        }
     }
     
     semaphore_V(flatfs->lock);
@@ -259,7 +259,7 @@ int flatfs_close(fs_t *fs, int fileid)
 {
     fs = fs;
     fileid = fileid;
-	
+    
     return VFS_OK;    
 }
 
@@ -284,124 +284,126 @@ int flatfs_create(fs_t *fs, char *filename, int size)
     uint32_t i;
     int index = -1;
     int r;
-	
+
+    int numblocks = -1;//TODO: not defined
+    
     semaphore_P(flatfs->lock);
-	
+    
     if(numblocks > (FLATFS_BLOCK_SIZE / 4 - 1)) {
-		semaphore_V(flatfs->lock);
-		return VFS_ERROR;
+        semaphore_V(flatfs->lock);
+        return VFS_ERROR;
     }
     
     /* Read directory block. Check that file doesn't allready exist and
-	 there is space left for the file in directory block. */
+     there is space left for the file in directory block. */
     req.block = FLATFS_DIRECTORY_BLOCK;
     req.buf = ADDR_KERNEL_TO_PHYS((uint32_t)flatfs->buffer_md);
     req.sem = NULL;
     r = flatfs->disk->read_block(flatfs->disk, &req);
     if(r == 0) {
-		/* An error occured. */
-		semaphore_V(flatfs->lock);
-		return VFS_ERROR;
+        /* An error occured. */
+        semaphore_V(flatfs->lock);
+        return VFS_ERROR;
     }
-	
+    
     for(i=0;i<FLATFS_MAX_FILES;i++) {
-		if(stringcmp(flatfs->buffer_md[i].name, filename) == 0) {
-			semaphore_V(flatfs->lock);
-			return VFS_ERROR;
-		}
-		
-		if(flatfs->buffer_md[i].inode == 0) {
-			/* found free slot from directory */
-			index = i;
-		}
+        if(stringcmp(flatfs->buffer_md[i].name, filename) == 0) {
+            semaphore_V(flatfs->lock);
+            return VFS_ERROR;
+        }
+        
+        if(flatfs->buffer_md[i].inode == 0) {
+            /* found free slot from directory */
+            index = i;
+        }
     }
-	
+    
     if(index == -1) {
-		/* there was no space in directory, because index is not set */
-		semaphore_V(flatfs->lock);
-		return VFS_ERROR;
+        /* there was no space in directory, because index is not set */
+        semaphore_V(flatfs->lock);
+        return VFS_ERROR;
     }
-	
+    
     stringcopy(flatfs->buffer_md[index].name,filename, FLATFS_FILENAME_MAX);
-	
+    
     /* Read allocation block and... */
     req.block = FLATFS_ALLOCATION_BLOCK;
     req.buf = ADDR_KERNEL_TO_PHYS((uint32_t)flatfs->buffer_bat);
     req.sem = NULL;
     r = flatfs->disk->read_block(flatfs->disk, &req);
     if(r==0) {
-		/* An error occured. */
-		semaphore_V(flatfs->lock);
-		return VFS_ERROR;
+        /* An error occured. */
+        semaphore_V(flatfs->lock);
+        return VFS_ERROR;
     }
-	
-	
+    
+    
     /* ...find space for inode... */
     flatfs->buffer_md[index].inode = bitmap_findnset(flatfs->buffer_bat,
-													 flatfs->totalblocks);
+                                                     flatfs->totalblocks);
     if((int)flatfs->buffer_md[index].inode == -1) {
-		semaphore_V(flatfs->lock);
-		return VFS_ERROR;
+        semaphore_V(flatfs->lock);
+        return VFS_ERROR;
     }
-	/* The initial filesize is 0.*/
-	flatfs->buffer_inode->filesize = 0;
-	
-	/* Mark all of the blocks in inode as unused. */
+    /* The initial filesize is 0.*/
+    flatfs->buffer_inode->filesize = 0;
+    
+    /* Mark all of the blocks in inode as unused. */
     for(i=0; i<FLATFS_MAX_DIRECT_BLOCK; i++)
-    	flatfs->buffer_inode->block[i] = 0;
-	
-	/* Mark the single and double inderect blocks as unused */
-	flatfs->buffer_inode->inderect_sigle = 0;
-	flatfs->buffer_inode->inderect_double = 0;
-	
-	
-	/* Write back the allocation block*/
+        flatfs->buffer_inode->block[i] = 0;
+    
+    /* Mark the single and double inderect blocks as unused */
+    flatfs->buffer_inode->inderect_sigle = 0;
+    flatfs->buffer_inode->inderect_double = 0;
+    
+    
+    /* Write back the allocation block*/
     req.block = FLATFS_ALLOCATION_BLOCK;
     req.buf   = ADDR_KERNEL_TO_PHYS((uint32_t)flatfs->buffer_bat);
     req.sem   = NULL;
     r = flatfs->disk->write_block(flatfs->disk, &req);
     if(r==0) {
-		/* An error occured. */
-		semaphore_V(flatfs->lock);
-		return VFS_ERROR;
+        /* An error occured. */
+        semaphore_V(flatfs->lock);
+        return VFS_ERROR;
     }
-	
+    
     req.block = FLATFS_DIRECTORY_BLOCK;
     req.buf   = ADDR_KERNEL_TO_PHYS((uint32_t)flatfs->buffer_md);
     req.sem   = NULL;
     r = flatfs->disk->write_block(flatfs->disk, &req);
     if(r==0) {
-		/* An error occured. */
-		semaphore_V(flatfs->lock);
-		return VFS_ERROR;
+        /* An error occured. */
+        semaphore_V(flatfs->lock);
+        return VFS_ERROR;
     }
-	
+    
     req.block = flatfs->buffer_md[index].inode;
     req.buf   = ADDR_KERNEL_TO_PHYS((uint32_t)flatfs->buffer_inode);
     req.sem   = NULL;
     r = flatfs->disk->write_block(flatfs->disk, &req);
     if(r==0) {
-		/* An error occured. */
-		semaphore_V(flatfs->lock);
-		return VFS_ERROR;
+        /* An error occured. */
+        semaphore_V(flatfs->lock);
+        return VFS_ERROR;
     }
-	
+    
     /* Write zeros to the reserved blocks. Buffer for allocation block
-	 is no longer needed, so lets use it as zero buffer. */ 
+     is no longer needed, so lets use it as zero buffer. */ 
     memoryset(flatfs->buffer_bat, 0, FLATFS_BLOCK_SIZE);
     for(i=0;i<numblocks;i++) {
-		req.block = flatfs->buffer_inode->block[i];
-		req.buf   = ADDR_KERNEL_TO_PHYS((uint32_t)flatfs->buffer_bat);
-		req.sem   = NULL;
-		r = flatfs->disk->write_block(flatfs->disk, &req);
-		if(r==0) {
-			/* An error occured. */
-			semaphore_V(flatfs->lock);
-			return VFS_ERROR;
-		}
-		
+        req.block = flatfs->buffer_inode->block[i];
+        req.buf   = ADDR_KERNEL_TO_PHYS((uint32_t)flatfs->buffer_bat);
+        req.sem   = NULL;
+        r = flatfs->disk->write_block(flatfs->disk, &req);
+        if(r==0) {
+            /* An error occured. */
+            semaphore_V(flatfs->lock);
+            return VFS_ERROR;
+        }
+        
     }
-	
+    
     semaphore_V(flatfs->lock);
     return VFS_OK;
 }
@@ -423,61 +425,61 @@ int flatfs_remove(fs_t *fs, char *filename)
     uint32_t i;
     int index = -1;
     int r;
-	
+    
     semaphore_P(flatfs->lock);
-	
+    
     /* Find file and inode block number from directory block.
-	 If not found return VFS_NOT_FOUND. */
+     If not found return VFS_NOT_FOUND. */
     req.block = FLATFS_DIRECTORY_BLOCK;
     req.buf = ADDR_KERNEL_TO_PHYS((uint32_t)flatfs->buffer_md);
     req.sem = NULL;
     r = flatfs->disk->read_block(flatfs->disk, &req);
     if(r == 0) {
-		/* An error occured. */
-		semaphore_V(flatfs->lock);
-		return VFS_ERROR;
+        /* An error occured. */
+        semaphore_V(flatfs->lock);
+        return VFS_ERROR;
     }
-	
+    
     for(i=0;i<FLATFS_MAX_FILES;i++) {
-		if(stringcmp(flatfs->buffer_md[i].name, filename) == 0) {
-			index = i;
-			break;
-		}
+        if(stringcmp(flatfs->buffer_md[i].name, filename) == 0) {
+            index = i;
+            break;
+        }
     }
     if(index == -1) {
-		semaphore_V(flatfs->lock);
-		return VFS_NOT_FOUND;
+        semaphore_V(flatfs->lock);
+        return VFS_NOT_FOUND;
     }
-	
+    
     /* Read allocation block of the device and inode block of the file.
-	 Free reserved blocks (marked in inode) from allocation block. */
+     Free reserved blocks (marked in inode) from allocation block. */
     req.block = FLATFS_ALLOCATION_BLOCK;
     req.buf = ADDR_KERNEL_TO_PHYS((uint32_t)flatfs->buffer_bat);
     req.sem = NULL;
     r = flatfs->disk->read_block(flatfs->disk, &req);
     if(r == 0) {
-		/* An error occured. */
-		semaphore_V(flatfs->lock);
-		return VFS_ERROR;
+        /* An error occured. */
+        semaphore_V(flatfs->lock);
+        return VFS_ERROR;
     }
-	
+    
     req.block = flatfs->buffer_md[index].inode;
     req.buf = ADDR_KERNEL_TO_PHYS((uint32_t)flatfs->buffer_inode);
     req.sem = NULL;
     r = flatfs->disk->read_block(flatfs->disk, &req);
     if(r == 0) {
-		/* An error occured. */
-		semaphore_V(flatfs->lock);
-		return VFS_ERROR;
+        /* An error occured. */
+        semaphore_V(flatfs->lock);
+        return VFS_ERROR;
     }
-	
-	
+    
+    
     bitmap_set(flatfs->buffer_bat,flatfs->buffer_md[index].inode,0);
     i=0;
     while(flatfs->buffer_inode->block[i] != 0 && 
-		  i < (FLATFS_BLOCK_SIZE / 4 - 1)) {
-		bitmap_set(flatfs->buffer_bat,flatfs->buffer_inode->block[i],0);
-		i++;
+          i < (FLATFS_BLOCK_SIZE / 4 - 1)) {
+        bitmap_set(flatfs->buffer_bat,flatfs->buffer_inode->block[i],0);
+        i++;
     }
     
     /* Free directory entry. */ 
@@ -489,21 +491,21 @@ int flatfs_remove(fs_t *fs, char *filename)
     req.sem   = NULL;
     r = flatfs->disk->write_block(flatfs->disk, &req);
     if(r == 0) {
-		/* An error occured. */
-		semaphore_V(flatfs->lock);
-		return VFS_ERROR;
+        /* An error occured. */
+        semaphore_V(flatfs->lock);
+        return VFS_ERROR;
     }
-	
+    
     req.block = FLATFS_DIRECTORY_BLOCK;
     req.buf   = ADDR_KERNEL_TO_PHYS((uint32_t)flatfs->buffer_md);
     req.sem   = NULL;
     r = flatfs->disk->write_block(flatfs->disk, &req);
     if(r == 0) {
-		/* An error occured. */
-		semaphore_V(flatfs->lock);
-		return VFS_ERROR;
+        /* An error occured. */
+        semaphore_V(flatfs->lock);
+        return VFS_ERROR;
     }
-	
+    
     semaphore_V(flatfs->lock);
     return VFS_OK;
 }
@@ -531,101 +533,101 @@ int flatfs_read(fs_t *fs, int fileid, void *buffer, int bufsize, int offset)
     int b1, b2;
     int read=0;
     int r;
-	
+    
     semaphore_P(flatfs->lock);
-	
+    
     /* fileid is blocknum so ensure that we don't read system blocks
-	 or outside the disk */
+     or outside the disk */
     if(fileid < 2 || fileid > (int)flatfs->totalblocks) {
-		semaphore_V(flatfs->lock);
-		return VFS_ERROR;
+        semaphore_V(flatfs->lock);
+        return VFS_ERROR;
     }
-	
+    
     req.block = fileid;
     req.buf   = ADDR_KERNEL_TO_PHYS((uint32_t)flatfs->buffer_inode);
     req.sem   = NULL;
     r = flatfs->disk->read_block(flatfs->disk, &req);
     if(r == 0) {
-		/* An error occured. */
-		semaphore_V(flatfs->lock);
-		return VFS_ERROR;
+        /* An error occured. */
+        semaphore_V(flatfs->lock);
+        return VFS_ERROR;
     }   
-	
+    
     /* Check that offset is inside the file */
     if(offset < 0 || offset > (int)flatfs->buffer_inode->filesize) {
-		semaphore_V(flatfs->lock);
-		return VFS_ERROR;
+        semaphore_V(flatfs->lock);
+        return VFS_ERROR;
     }
-	
+    
     /* Read at most what is left from the file. */ 
     bufsize = MIN(bufsize,((int)flatfs->buffer_inode->filesize) - offset);
-	
+    
     if(bufsize==0) {
-		semaphore_V(flatfs->lock);
-		return 0;
+        semaphore_V(flatfs->lock);
+        return 0;
     }
-	
+    
     /* first block to be read from the disk */
     b1 = offset / FLATFS_BLOCK_SIZE;
     
     /* last block to be read from the disk */
     b2 = (offset+bufsize-1) / FLATFS_BLOCK_SIZE;
-	
+    
     /* Read blocks from b1 to b2. First and last are
-	 special cases because whole block might not be written
-	 to the buffer. */
+     special cases because whole block might not be written
+     to the buffer. */
     req.block = flatfs->buffer_inode->block[b1];
     req.buf   = ADDR_KERNEL_TO_PHYS((uint32_t)flatfs->buffer_bat);
     req.sem   = NULL;
     r = flatfs->disk->read_block(flatfs->disk, &req);
     if(r == 0) {
-		/* An error occured. */
-		semaphore_V(flatfs->lock);
-		return VFS_ERROR;
+        /* An error occured. */
+        semaphore_V(flatfs->lock);
+        return VFS_ERROR;
     }
-	
+    
     /* Count the number of the bytes to be read from the block and
-	 written to the buffer from the first block. */
+     written to the buffer from the first block. */
     read = MIN(FLATFS_BLOCK_SIZE - (offset % FLATFS_BLOCK_SIZE),bufsize);
     memcopy(read,
-			buffer,
-			(const uint32_t *)(((uint32_t)flatfs->buffer_bat) + 
-							   (offset % FLATFS_BLOCK_SIZE)));   
+            buffer,
+            (const uint32_t *)(((uint32_t)flatfs->buffer_bat) + 
+                               (offset % FLATFS_BLOCK_SIZE)));   
     
     buffer = (void *)((uint32_t)buffer + read);
     b1++;
     while(b1 <= b2) {
-		
-		
-		req.block = flatfs_getBlockPointer(flatfs, b1);
-		req.buf   = ADDR_KERNEL_TO_PHYS((uint32_t)flatfs->buffer_bat);
-		req.sem   = NULL;
-		
-		r = flatfs->disk->read_block(flatfs->disk, &req);
-		if(r == 0) {
-			/* An error occured. */
-			semaphore_V(flatfs->lock);
-			return VFS_ERROR;
-		}
-		
-		if(b1 == b2) {
-			/* Last block. Whole block might not be read.*/
-			memcopy(bufsize - read,
-					buffer,
-					(const uint32_t *)flatfs->buffer_bat);
-			read += (bufsize - read);
-		}
-		else {
-			/* Read whole block */
-			memcopy(FLATFS_BLOCK_SIZE,
-					buffer,
-					(const uint32_t *)flatfs->buffer_bat);
-			read += FLATFS_BLOCK_SIZE;
-			buffer = (void *)((uint32_t)buffer + FLATFS_BLOCK_SIZE);
-		}
-		b1++;
+        
+        
+        req.block = flatfs_getBlockPointer(flatfs, b1, 0);
+        req.buf   = ADDR_KERNEL_TO_PHYS((uint32_t)flatfs->buffer_bat);
+        req.sem   = NULL;
+        
+        r = flatfs->disk->read_block(flatfs->disk, &req);
+        if(r == 0) {
+            /* An error occured. */
+            semaphore_V(flatfs->lock);
+            return VFS_ERROR;
+        }
+        
+        if(b1 == b2) {
+            /* Last block. Whole block might not be read.*/
+            memcopy(bufsize - read,
+                    buffer,
+                    (const uint32_t *)flatfs->buffer_bat);
+            read += (bufsize - read);
+        }
+        else {
+            /* Read whole block */
+            memcopy(FLATFS_BLOCK_SIZE,
+                    buffer,
+                    (const uint32_t *)flatfs->buffer_bat);
+            read += FLATFS_BLOCK_SIZE;
+            buffer = (void *)((uint32_t)buffer + FLATFS_BLOCK_SIZE);
+        }
+        b1++;
     }
-	
+    
     semaphore_V(flatfs->lock);
     return read;
 }
@@ -654,105 +656,106 @@ int flatfs_write(fs_t *fs, int fileid, void *buffer, int datasize, int offset)
     int b1, b2, b_file;
     int written=0;
     int r;
-	
+    
     semaphore_P(flatfs->lock);
-	
+    
     /* fileid is blocknum so ensure that we don't read system blocks
-	 or outside the disk */
+     or outside the disk */
     if(fileid < 2 || fileid > (int)flatfs->totalblocks) {
-		semaphore_V(flatfs->lock);
-		return VFS_ERROR;
+        semaphore_V(flatfs->lock);
+        return VFS_ERROR;
     }
-	
+    
     req.block = fileid;
     req.buf   = ADDR_KERNEL_TO_PHYS((uint32_t)flatfs->buffer_inode);
     req.sem   = NULL;
     r = flatfs->disk->read_block(flatfs->disk, &req);
     if(r == 0) {
-		/* An error occured. */
-		semaphore_V(flatfs->lock);
-		return VFS_ERROR;
+        /* An error occured. */
+        semaphore_V(flatfs->lock);
+        return VFS_ERROR;
     }
-	
-	
-	/* Loading allocation block to memory page */
-	req.block = TFS_ALLOCATION_BLOCK;
+    
+    
+    /* Loading allocation block to memory page */
+    req.block = FLATFS_ALLOCATION_BLOCK;
     req.buf   = ADDR_KERNEL_TO_PHYS((uint32_t)flatfs->buffer_bat);
     req.sem   = NULL;
     r = flatfs->disk->read_block(flatfs->disk, &req);
     if(r == 0) {
-		/* An error occured. */
-		semaphore_V(flatfs->lock);
-		return VFS_ERROR;
+        /* An error occured. */
+        semaphore_V(flatfs->lock);
+        return VFS_ERROR;
     }
-	
-	
-	
+    
+    
+    
     /* check that start position is inside the disk */
     if(offset < 0 || offset > (int)flatfs->buffer_inode->filesize) {
-		semaphore_V(flatfs->lock);
-		return VFS_ERROR;
+        semaphore_V(flatfs->lock);
+        return VFS_ERROR;
     }
-	
-	
-    if(datasize==0) {
-		semaphore_V(flatfs->lock);
-		return 0;
-    }
-	
     
-	
+    
+    if(datasize==0) {
+        semaphore_V(flatfs->lock);
+        return 0;
+    }
+    
+    
+    
     /* first block to be written into */
     b1 = offset / FLATFS_BLOCK_SIZE;
     
     /* last block to be written into */
     b2 = (offset+datasize-1) / FLATFS_BLOCK_SIZE;
 
+    int filesize = -1; //TODO: not defined
     /* number of block allocated in the file */
-    b_file = (filesize) / FLATFS_BLOCK_SIZE
+    b_file = (filesize) / FLATFS_BLOCK_SIZE;
     
     
     
     /* Write data to blocks from b1 to b2. First and last are special
-	 cases because whole block might not be written. Because of possible
-	 partial write, first and last block must be read before writing. 
-	 
-	 If we write less than block size or start writing in the middle
-	 of the block, read the block firts. Buffer for allocation block
-	 is used because it is not needed (for allocation block) in this
-	 function. */
+     cases because whole block might not be written. Because of possible
+     partial write, first and last block must be read before writing. 
+     
+     If we write less than block size or start writing in the middle
+     of the block, read the block firts. Buffer for allocation block
+     is used because it is not needed (for allocation block) in this
+     function. */
     written = MIN(FLATFS_BLOCK_SIZE - (offset % FLATFS_BLOCK_SIZE),datasize);
     if(written < FLATFS_BLOCK_SIZE) {
-		req.block = flatfs->buffer_inode->block[b1];
-		req.buf   = ADDR_KERNEL_TO_PHYS((uint32_t)flatfs->buffer_md);
-		req.sem   = NULL;
-		r = flatfs->disk->read_block(flatfs->disk, &req);
-		if(r == 0) {
-			/* An error occured. */
-			semaphore_V(flatfs->lock);
-			return VFS_ERROR;
-		}
+        req.block = flatfs->buffer_inode->block[b1];
+        req.buf   = ADDR_KERNEL_TO_PHYS((uint32_t)flatfs->buffer_md);
+        req.sem   = NULL;
+        r = flatfs->disk->read_block(flatfs->disk, &req);
+        if(r == 0) {
+            /* An error occured. */
+            semaphore_V(flatfs->lock);
+            return VFS_ERROR;
+        }
     }
-	
+    
     memcopy(written,
-			(uint32_t *)(((uint32_t)flatfs->buffer_md) + 
-						 (offset % FLATFS_BLOCK_SIZE)),
-			buffer);   
+            (uint32_t *)(((uint32_t)flatfs->buffer_md) + 
+                         (offset % FLATFS_BLOCK_SIZE)),
+            buffer);   
     
     req.block = flatfs->buffer_inode->block[b1];
     req.buf   = ADDR_KERNEL_TO_PHYS((uint32_t)flatfs->buffer_md);
     req.sem   = NULL;
     r = flatfs->disk->write_block(flatfs->disk, &req);
     if(r == 0) {
-		/* An error occured. */
-		semaphore_V(flatfs->lock);
-		return VFS_ERROR;
+        /* An error occured. */
+        semaphore_V(flatfs->lock);
+        return VFS_ERROR;
     }
-	
+    
     buffer = (void *)((uint32_t)buffer + written);
     b1++;
     while(b1 <= b2) {
-		
+        
         if (b2 <= b_file) {
             /* the data block is already allocated in the file */
             uint32_t block_pointer = flatfs_getBlockPointer(flatfs, b1,0);
@@ -760,49 +763,51 @@ int flatfs_write(fs_t *fs, int fileid, void *buffer, int datasize, int offset)
             /* the data block is not allocated in the file */
             uint32_t block_pointer = flatfs_getBlockPointer(flatfs, b1,1);
         }
-		
-		if(b1 == b2) {
-			/* Last block. If partial write, read the block first.
-			 Write anyway always to the beginning of the block */ 
-			if((datasize - written)  < FLATFS_BLOCK_SIZE) {
-				req.block = block_pointer;
-				req.buf   = ADDR_KERNEL_TO_PHYS((uint32_t)flatfs->buffer_md);
-				req.sem   = NULL;
-				r = flatfs->disk->read_block(flatfs->disk, &req);
-				if(r == 0) {
-					/* An error occured. */
-					semaphore_V(flatfs->lock);
-					return VFS_ERROR;
-				}
-			}
-			
-			memcopy(datasize - written,
-					(uint32_t *)flatfs->buffer_md,
-					buffer);
-			written = datasize;
-		}
-		else {
-			/* Write whole block */
-			memcopy(FLATFS_BLOCK_SIZE,
-					(uint32_t *)flatfs->buffer_md,
-					buffer);
-			written += FLATFS_BLOCK_SIZE;
-			buffer = (void *)((uint32_t)buffer + FLATFS_BLOCK_SIZE);
-		}
-		
-		req.block = block_pointer;
-		req.buf   = ADDR_KERNEL_TO_PHYS((uint32_t)flatfs->buffer_md);
-		req.sem   = NULL;
-		r = flatfs->disk->write_block(flatfs->disk, &req);
-		if(r == 0) {
-			/* An error occured. */
-			semaphore_V(flatfs->lock);
-			return VFS_ERROR;
-		}
-		
-		b1++;
+        
+        if(b1 == b2) {
+            /* Last block. If partial write, read the block first.
+             Write anyway always to the beginning of the block */ 
+            if((datasize - written)  < FLATFS_BLOCK_SIZE) {
+                int block_pointer = -1;//TODO: not defined
+                req.block = block_pointer;
+                req.buf   = ADDR_KERNEL_TO_PHYS((uint32_t)flatfs->buffer_md);
+                req.sem   = NULL;
+                r = flatfs->disk->read_block(flatfs->disk, &req);
+                if(r == 0) {
+                    /* An error occured. */
+                    semaphore_V(flatfs->lock);
+                    return VFS_ERROR;
+                }
+            }
+            
+            memcopy(datasize - written,
+                    (uint32_t *)flatfs->buffer_md,
+                    buffer);
+            written = datasize;
+        }
+        else {
+            /* Write whole block */
+            memcopy(FLATFS_BLOCK_SIZE,
+                    (uint32_t *)flatfs->buffer_md,
+                    buffer);
+            written += FLATFS_BLOCK_SIZE;
+            buffer = (void *)((uint32_t)buffer + FLATFS_BLOCK_SIZE);
+        }
+        
+        int block_pointer = -1;//TODO: not defined
+        req.block = block_pointer;
+        req.buf   = ADDR_KERNEL_TO_PHYS((uint32_t)flatfs->buffer_md);
+        req.sem   = NULL;
+        r = flatfs->disk->write_block(flatfs->disk, &req);
+        if(r == 0) {
+            /* An error occured. */
+            semaphore_V(flatfs->lock);
+            return VFS_ERROR;
+        }
+        
+        b1++;
     }
-	
+    
     semaphore_V(flatfs->lock);
     return written;
 }
@@ -823,28 +828,28 @@ int flatfs_getfree(fs_t *fs)
     int allocated = 0;
     uint32_t i;
     int r;
-	
+    
     semaphore_P(flatfs->lock);
-	
+    
     req.block = FLATFS_ALLOCATION_BLOCK;
     req.buf = ADDR_KERNEL_TO_PHYS((uint32_t)flatfs->buffer_bat);
     req.sem = NULL;
     r = flatfs->disk->read_block(flatfs->disk, &req);
     if(r == 0) {
-		/* An error occured. */
-		semaphore_V(flatfs->lock);
-		return VFS_ERROR;
+        /* An error occured. */
+        semaphore_V(flatfs->lock);
+        return VFS_ERROR;
     }
-	
+    
     for(i=0;i<flatfs->totalblocks;i++) {
-		allocated += bitmap_get(flatfs->buffer_bat,i);
+        allocated += bitmap_get(flatfs->buffer_bat,i);
     }
     
     semaphore_V(flatfs->lock);
     return (flatfs->totalblocks - allocated)*FLATFS_BLOCK_SIZE;
 }
 /*
- Using flatfs_md as temporary buffer. 
+ Using buffer_md as temporary buffer. 
  
  @param fs Pointer to fs data structure of the device.
  @param index to the block in the file
@@ -855,20 +860,20 @@ int flatfs_getfree(fs_t *fs)
  
  */
 uint32_t flatfs_getBlockPointer(flatfs_t *flatfs, uint32_t b1, int allocate){
-	
-	gbd_request_t req;
+    
+    gbd_request_t req;
     int r, i, block_index, index;
-	uint32_t returnvalue, pointerblock;
+    uint32_t returnvalue, pointerblock;
         
     
-	
-	if (b1 < FLATFS_MAX_DIRECT_BLOCK){
-		/* The block is located in a direct index */	
+    
+    if (b1 < FLATFS_MAX_DIRECT_BLOCK){
+        /* The block is located in a direct index */    
         
         
         
-	} else if ((b1 - FLATFS_MAX_DIRECT_BLOCK) < FLATFS_BLOCKS_MAX) {        
-		/* The block is located in a single inderect index block */
+    } else if ((b1 - FLATFS_MAX_DIRECT_BLOCK) < FLATFS_BLOCKS_MAX) {        
+        /* The block is located in a single inderect index block */
         
         /* Computes the index for the block pointer in the pointer block */
         i = b1 - FLATFS_MAX_DIRECT_BLOCK;
@@ -883,11 +888,11 @@ uint32_t flatfs_getBlockPointer(flatfs_t *flatfs, uint32_t b1, int allocate){
             returnvalue = bitmap_findnset(flatfs->buffer_bat, flatfs->totalblocks);
             
             /* prepering the pointer node */            
-            ((flatfs_pointernode_t*) (flatfs->flatfs_md))->block[0] = returnvalue; 
+            ((flatfs_pointernode_t*) (flatfs->buffer_md))->block[0] = returnvalue; 
             
             /* Writing pointer node to the disk */
             req.block = returnvalue;
-            req.buf   = ADDR_KERNEL_TO_PHYS((uint32_t)flatfs->flatfs_md);
+            req.buf   = ADDR_KERNEL_TO_PHYS((uint32_t)flatfs->buffer_md);
             req.sem   = NULL;
             r = flatfs->disk->write_block(flatfs->disk, &req);
             
@@ -898,7 +903,7 @@ uint32_t flatfs_getBlockPointer(flatfs_t *flatfs, uint32_t b1, int allocate){
             
             /* reading the pointer node from the the disk */
             req.block = flatfs->buffer_inode->inderect_sigle;
-            req.buf   = ADDR_KERNEL_TO_PHYS((uint32_t)flatfs->flatfs_md);
+            req.buf   = ADDR_KERNEL_TO_PHYS((uint32_t)flatfs->buffer_md);
             req.sem   = NULL;
             r = flatfs->disk->read_block(flatfs->disk, &req);
             
@@ -906,11 +911,11 @@ uint32_t flatfs_getBlockPointer(flatfs_t *flatfs, uint32_t b1, int allocate){
             returnvalue = bitmap_findnset(flatfs->buffer_bat, flatfs->totalblocks);
             
             /* prepering the pointer node */            
-            ((flatfs_pointernode_t*) (flatfs->flatfs_md))->block[i] = returnvalue; 
+            ((flatfs_pointernode_t*) (flatfs->buffer_md))->block[i] = returnvalue; 
             
             /* Writing pointer node to the disk */
             req.block = returnvalue;
-            req.buf   = ADDR_KERNEL_TO_PHYS((uint32_t)flatfs->flatfs_md);
+            req.buf   = ADDR_KERNEL_TO_PHYS((uint32_t)flatfs->buffer_md);
             req.sem   = NULL;
             r = flatfs->disk->write_block(flatfs->disk, &req);
             
@@ -921,11 +926,11 @@ uint32_t flatfs_getBlockPointer(flatfs_t *flatfs, uint32_t b1, int allocate){
             
             /* reading the pointer node from the the disk */
             req.block = flatfs->buffer_inode->inderect_sigle;
-            req.buf   = ADDR_KERNEL_TO_PHYS((uint32_t)flatfs->flatfs_md);
+            req.buf   = ADDR_KERNEL_TO_PHYS((uint32_t)flatfs->buffer_md);
             req.sem   = NULL;
             r = flatfs->disk->read_block(flatfs->disk, &req);
             
-            return ((flatfs_pointernode_t*) (flatfs->flatfs_md))->block[i];
+            return ((flatfs_pointernode_t*) (flatfs->buffer_md))->block[i];
             
         }
         
@@ -937,7 +942,7 @@ uint32_t flatfs_getBlockPointer(flatfs_t *flatfs, uint32_t b1, int allocate){
       */   
         return -1;
     }
-	
+    
 }
 
 
